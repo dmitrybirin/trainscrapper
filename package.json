@@ -1,0 +1,19 @@
+{
+  "name": "rzd_api_scrap",
+  "version": "1.0.0",
+  "description": "test data getting for big data research",
+  "main": "data_scrapper.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "assert": "^1.4.1",
+    "async": "^2.0.0",
+    "mongodb": "^2.2.1",
+    "nightmare": "^2.5.3",
+    "query-string": "^4.2.2",
+    "x-ray": "^2.3.0"
+  }
+}
