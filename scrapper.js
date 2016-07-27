@@ -49,10 +49,13 @@ Nightmare({ show: false })
 
 
 var transformDataToDb = function(err, raw_data){
+    console.log(raw_data[0]);
         async.concat(raw_data, (train, callback) => {
         async.map(train.cars, (car, callback)=>{
             let ticket = car;
             ticket.trainNumber = train.number;
+            ticket.departureStation = train.departureStation
+            ticket.arrivalStation = train.arrivalStation
             ticket.departureDateTime = new Date(`${currentDate.usStr} ${train.departureDateTime}`)
             ticket.arrivalDateTime = new Date(`${currentDate.usStr} ${train.arrivalDateTime}`)
             ticket.scanDateTime = new Date()
