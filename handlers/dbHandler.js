@@ -9,8 +9,7 @@ var targetColletion = 'tickets_data'
 var counterCollection = 'counters'
 var eventEmitter = new events.EventEmitter();
 eventEmitter.addListener('disconnect', function(){
-    console.log('Closing the database connection...');
-    db.close();
+
 });
 
 var db;
@@ -28,38 +27,43 @@ function connect(callback) {
     callback(null, db);
 }}
 
-var getSequenceAndInsertIntoDb = function(db, data){
-    async.waterfall([
-        function(callback){
-            db.collection(counterCollection).findAndModify(
-                {_id: 'ticketId' },
-                [],
-                {$inc:{sequence_value:1}}, 
-                function(err, result){
-                    assert.equal(err, null);
-                    callback(null,result.value.sequence_value) 
-                })
-        },
-        function(id, callback){
-            data._id = id;
-            db.collection(targetColletion).insertOne(data, {safe: true},function(err){
-                assert.equal(err, null);
-                console.log(`Ticket data with ${id} id on ${data.departureDateTime} was successfully added to db`);
-                countToDone-=1;
-                console.log(countToDone);
-                if (countToDone ==0) eventEmitter.emit('disconnect') 
-            })
-        }], function(err){
-            assert.equal(err, null);
-        })
-}
 
 exports.addDataToDb = function(ticketsData){
     connect(function(err, db) {
         assert.equal(err, null)
         countToDone = ticketsData.length;
-        for (let dataBit of ticketsData){
-            getSequenceAndInsertIntoDb(db, dataBit)
-        }
+        async.eachSeries(
+            ticketsData,
+            function(data, callback){
+                async.waterfall([
+                    function(callback){
+                        db.collection(counterCollection).findAndModify(
+                            {_id: 'ticketId' },
+                            [],
+                            {$inc:{sequence_value:1}}, 
+                            function(err, result){
+                                assert.equal(err, null);
+                                callback(null,result.value.sequence_value) 
+                            })
+                    },
+                    function(id, callback){
+                        data._id = id;
+                        db.collection(targetColletion).insertOne(data, {safe: true},function(err){
+                            assert.equal(err, null);
+                            console.log(`Ticket data with ${id} id on ${data.departureDateTime} was successfully added to db`);
+                            callback(null)
+                        })
+                    }], function(err){
+                        assert.equal(err, null);
+                        callback(null)
+                    })
+            }, 
+            function(err){
+                if (!err) {
+                    console.log('Closing the database connection...');
+                    db.close();
+                }
+                else console.log('Error occured, while adding stuff to db...\n', err);
+        })
     })
 }

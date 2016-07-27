@@ -1,5 +1,6 @@
 'use strict'
 var Nightmare = require('nightmare');
+var async = require('async')
 
 var t = require('./handlers/timeHandler')
 var u = require ('./handlers/urlHandler')
@@ -43,25 +44,27 @@ Nightmare({ show: false })
             price: '.trlist__table-price__price span | trimN | trimRub | toInt'   
         }])
     }])(function(err, raw_data){
-        var resultData = []
-        var id = 0;
-        raw_data.map((train)=>{            
-            train.cars.map((car)=>{
-                var typeData = car;
-                typeData.trainNumber = train.number;
-                typeData.departureDateTime = new Date(`${currentDate.usStr} ${train.departureDateTime}`)
-                typeData.arrivalDateTime = new Date(`${currentDate.usStr} ${train.arrivalDateTime}`)
-                typeData.scanDateTime = new Date()
-                typeData.hoursInWay = train.wayHours
-                typeData.carrier = train.carrier
-                typeData.brand = train.brand
-                typeData.varPrice = train.varPrice ? true : false
-                typeData.wifi = train.wifi ? true : false
-                typeData.id = id;
-                resultData.push(typeData)
-            })
+      async.concat(raw_data, (train, callback) => {
+            async.map(train.cars, (car, callback)=>{
+                let ticket = car;
+                ticket.trainNumber = train.number;
+                ticket.departureDateTime = new Date(`${currentDate.usStr} ${train.departureDateTime}`)
+                ticket.arrivalDateTime = new Date(`${currentDate.usStr} ${train.arrivalDateTime}`)
+                ticket.scanDateTime = new Date()
+                ticket.hoursInWay = train.wayHours
+                ticket.carrier = train.carrier
+                ticket.brand = train.brand
+                ticket.varPrice = train.varPrice ? true : false
+                ticket.wifi = train.wifi ? true : false
+                callback(null, ticket)
+            }, function(err, results){
+                if (!err) callback(null, results)
+                else console.log('Error occured, while transforming car to ticket...\n', err);
+            })            
+        }, function(err,results){
+            if (!err) db.addDataToDb(results)
+            else console.log('Error occured, while iterating on trains...\n', err);
         })
-    // db.addDataToDb(resultData)
     })
   })
   .catch(function (error) {
