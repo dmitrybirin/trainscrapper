@@ -7,7 +7,8 @@ exports.dateToFormat = function (inputDate){
     return {
         date:new Date(yyyy, mm, dd), 
         rzdStr: `${dd}.${mm+1}.${yyyy}`,
-        usStr: `${mm+1}.${dd}.${yyyy}`}   
+        usStr: `${mm+1}.${dd}.${yyyy}`
+    }   
 }
 
 exports.nextDay = function nextDay(inputDate, daysInFuture){

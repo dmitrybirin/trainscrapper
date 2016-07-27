@@ -7,13 +7,8 @@ var events = require('events');
 var url = 'mongodb://localhost:27017/rzd'
 var targetColletion = 'tickets_data'
 var counterCollection = 'counters'
-var eventEmitter = new events.EventEmitter();
-eventEmitter.addListener('disconnect', function(){
-
-});
 
 var db;
-var countToDone;
 
 function connect(callback) {
   if (db === undefined) {
@@ -31,7 +26,6 @@ function connect(callback) {
 exports.addDataToDb = function(ticketsData){
     connect(function(err, db) {
         assert.equal(err, null)
-        countToDone = ticketsData.length;
         async.eachSeries(
             ticketsData,
             function(data, callback){
