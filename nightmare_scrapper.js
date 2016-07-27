@@ -17,8 +17,6 @@ let direction = directions[0]
 
 var reqUrl = u.getUrl(currentDate, direction)
 
-console.log(reqUrl);
-
 Nightmare({ show: false })
   .goto(reqUrl)
   .wait('table.trlist')
@@ -43,30 +41,33 @@ Nightmare({ show: false })
             freeSeats: '.trlist__table-price__freeseats | toInt',
             price: '.trlist__table-price__price span | trimN | trimRub | toInt'   
         }])
-    }])(function(err, raw_data){
-      async.concat(raw_data, (train, callback) => {
-            async.map(train.cars, (car, callback)=>{
-                let ticket = car;
-                ticket.trainNumber = train.number;
-                ticket.departureDateTime = new Date(`${currentDate.usStr} ${train.departureDateTime}`)
-                ticket.arrivalDateTime = new Date(`${currentDate.usStr} ${train.arrivalDateTime}`)
-                ticket.scanDateTime = new Date()
-                ticket.hoursInWay = train.wayHours
-                ticket.carrier = train.carrier
-                ticket.brand = train.brand
-                ticket.varPrice = train.varPrice ? true : false
-                ticket.wifi = train.wifi ? true : false
-                callback(null, ticket)
-            }, function(err, results){
-                if (!err) callback(null, results)
-                else console.log('Error occured, while transforming car to ticket...\n', err);
-            })            
-        }, function(err,results){
-            if (!err) db.addDataToDb(results)
-            else console.log('Error occured, while iterating on trains...\n', err);
-        })
-    })
+    }])(transformDataToDb)
   })
   .catch(function (error) {
     console.error('Scrap failed:', error);
   });
+
+
+var transformDataToDb = function(err, raw_data){
+        async.concat(raw_data, (train, callback) => {
+        async.map(train.cars, (car, callback)=>{
+            let ticket = car;
+            ticket.trainNumber = train.number;
+            ticket.departureDateTime = new Date(`${currentDate.usStr} ${train.departureDateTime}`)
+            ticket.arrivalDateTime = new Date(`${currentDate.usStr} ${train.arrivalDateTime}`)
+            ticket.scanDateTime = new Date()
+            ticket.hoursInWay = train.wayHours
+            ticket.carrier = train.carrier
+            ticket.brand = train.brand
+            ticket.varPrice = train.varPrice ? true : false
+            ticket.wifi = train.wifi ? true : false
+            callback(null, ticket)
+        }, function(err, results){
+            if (!err) callback(null, results)
+            else console.log('Error occured, while transforming car to ticket...\n', err);
+        })            
+    }, function(err,results){
+        if (!err) db.addDataToDb(results)
+        else console.log('Error occured, while iterating on trains...\n', err);
+    })
+}
