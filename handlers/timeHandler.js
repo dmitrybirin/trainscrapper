@@ -12,6 +12,7 @@ exports.dateToFormat = function (inputDate){
 }
 
 exports.nextDay = function nextDay(inputDate, daysInFuture){
-    var date = inputDate.setDate(inputDate.getDate() + daysInFuture) 
+    var date = new Date(inputDate)
+    date.setDate(date.getDate() + daysInFuture)
     return this.dateToFormat(date)
 }
