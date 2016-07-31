@@ -1,63 +1,50 @@
 'use strict'
-var MongoClient = require('mongodb').MongoClient
 var assert = require('assert')
 var async = require('async')
-var events = require('events');
+var mongojs = require('mongojs')
+
+var config = require('./../config')
 
 var url = 'mongodb://localhost:27017/rzd'
-var targetColletion = 'tickets_data'
-var counterCollection = 'counters'
 
-var db;
+var db = mongojs(url, ['counters', 'tickets'])
 
-function connect(callback) {
-  if (db === undefined) {
-    console.log('Connecting to database..');
-    MongoClient.connect(url, function(err, database) {
-      assert.equal(err, null)
-      db = database;
-      callback(null, db);
-    });  
-  } else {
-    callback(null, db);
-}}
-
-
-exports.addDataToDb = function(ticketsData){
-    connect(function(err, db) {
-        assert.equal(err, null)
+exports.addDataToDb = function(ticketsData, next){
         async.eachSeries(
             ticketsData,
-            function(data, callback){
+            function(data, eachSeriesCallback){
                 async.waterfall([
                     function(callback){
-                        db.collection(counterCollection).findAndModify(
-                            {_id: 'ticketId' },
-                            [],
-                            {$inc:{sequence_value:1}}, 
-                            function(err, result){
-                                assert.equal(err, null);
-                                callback(null,result.value.sequence_value) 
-                            })
+                        db.counters.findAndModify({
+                            query: {_id: 'ticketId' },
+                            update: {$inc:{sequence_value:1}}
+                        },
+                        function(err, result){
+                            assert.equal(err, null);
+                            callback(null,result.sequence_value) 
+                        })
                     },
                     function(id, callback){
                         data._id = id;
-                        db.collection(targetColletion).insertOne(data, {safe: true},function(err){
+                        db.tickets.insert(data, {safe: true},function(err){
                             assert.equal(err, null);
-                            console.log(`Ticket data with ${id} id on ${data.departureDateTime} was successfully added to db`);
+                            if (config.DEBUG) console.log(`Ticket data with ${id} id on ${data.departureDateTime} was successfully added to db`)
                             callback(null)
                         })
                     }], function(err){
                         assert.equal(err, null);
-                        callback(null)
+                        eachSeriesCallback(null)
                     })
             }, 
             function(err){
                 if (!err) {
-                    console.log('Closing the database connection...');
-                    db.close();
+                    if (config.DEBUG) console.log(`All items on ${ticketsData[0].departureDateTime.rzdStr} has been added to the DB.`);
+                    next(null)
                 }
                 else console.log('Error occured, while adding stuff to db...\n', err);
         })
-    })
+}
+
+exports.close = function(){
+    db.close()
 }

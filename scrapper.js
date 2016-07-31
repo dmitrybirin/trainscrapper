@@ -5,16 +5,29 @@ var async = require('async')
 var u = require ('./handlers/urlHandler')
 var x = require ('./handlers/xRayHandler')
 var db = require('./handlers/dbHandler')
+var config = require('./config')
 
-exports.scrapData = function(date, direction){
-    Nightmare({ show: true })
+var nightmare = Nightmare({ show: false }); 
+
+exports.done = function(){
+    async.series([
+        (dbCallback) => {if (config.DEBUG) console.log('Closing the db connection...');db.close(); dbCallback(null)},
+        (nightmareCallback) => {if (config.DEBUG) console.log('Closing the nightmare...');nightmare._endNow(); nightmareCallback(null)}
+    ],function(err){
+        if (err) console.log('Error occured, while terminating Db and Nightmare:\n', err); 
+    })
+}
+
+exports.scrapData = function(date, direction, next){
+    console.log(`Beginning to scrap data on ${date.rzdStr} to ${direction.toCity}...`);
+    nightmare
     .goto(u.getUrl(date, direction))
     .wait('table.trlist')
     .evaluate(function () {
         return document.querySelector('table.trlist').innerHTML
     })
-    .end()
     .then(function (rzdTable) {
+        if (config.DEBUG) console.log(`Got the HTML. Srapping...`);
         x(rzdTable, '.trlist__trlist-row', [{
             number: '.trlist__cell-pointdata__tr-num | trimNumber',
             brand: '.trlist__cell-pointdata__tr-brand | trimN',
@@ -33,15 +46,44 @@ exports.scrapData = function(date, direction){
                 freeSeats: '.trlist__table-price__freeseats | toInt',
                 price: '.trlist__table-price__price span | trimN | trimRub | toInt'   
             }])
-        }])(transformDataToDb)
+        }])(function(err, raw_data){
+            if (config.DEBUG) console.log(`Transforming scrapped data...`);
+            async.concat(raw_data, (train, callback) => {
+                async.map(train.cars, (car, callback)=>{
+                    let ticket = car;
+                    ticket.trainNumber = train.number;
+                    ticket.departureStation = train.departureStation
+                    ticket.arrivalStation = train.arrivalStation
+                    ticket.departureDateTime = new Date(`${train.departureDate} ${train.departureTime}`)
+                    ticket.arrivalDateTime = new Date(`${train.arrivalDate} ${train.arrivalTime}`)
+                    ticket.scanDateTime = new Date()
+                    ticket.hoursInWay = train.wayHours
+                    ticket.carrier = train.carrier
+                    ticket.brand = train.brand
+                    ticket.varPrice = train.varPrice ? true : false
+                    ticket.wifi = train.wifi ? true : false
+                    callback(null, ticket)
+                }, function(err, results){
+                    if (!err) {
+                        callback(null, results)
+                    }
+                    else console.log('Error occured, while transforming car to ticket...\n', err)
+                })            
+            }, function(err,results){
+                if (!err) {
+                    if (config.DEBUG) console.log(`Transform completed adding to db...`);
+                    db.addDataToDb(results, next); 
+                }
+                else console.log('Error occured, while iterating on trains...\n', err)
+            })
+        })
     })
     .catch(function (error) {
-        console.error('Scrap failed:', error);
+        next(error)
     });
 }
 
 var transformDataToDb = function(err, raw_data){
-    console.log(raw_data[0]);
     async.concat(raw_data, (train, callback) => {
         async.map(train.cars, (car, callback)=>{
             let ticket = car;
@@ -59,10 +101,10 @@ var transformDataToDb = function(err, raw_data){
             callback(null, ticket)
         }, function(err, results){
             if (!err) callback(null, results)
-            else console.log('Error occured, while transforming car to ticket...\n', err);
+            else console.log('Error occured, while transforming car to ticket...\n', err)
         })            
     }, function(err,results){
         if (!err) db.addDataToDb(results)
-        else console.log('Error occured, while iterating on trains...\n', err);
+        else console.log('Error occured, while iterating on trains...\n', err)
     })
 }
