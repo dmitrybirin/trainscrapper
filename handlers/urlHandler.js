@@ -1,10 +1,10 @@
+var moment = require('moment')
 var qs = require('query-string');
-var t = require('./timeHandler')
 
 var getTrainsUrl = "https://pass.rzd.ru/timetable/public/ru" 
 
 exports.getUrl = function(date, direction){
-
+    
     var innerData = {
         STRUCTURE_ID: 735,
         refererPageId: 704
@@ -18,7 +18,7 @@ exports.getUrl = function(date, direction){
         dt0:date.rzdStr,
         st1:direction.toCity,
         code1:direction.toCode,
-        dt1:t.nextDay(date.date,1).rzdStr
+        dt1: moment(date).add(1, 'day').format('DD.MM.YYYY')
     }  
 
     var paramsArray = []

@@ -1,6 +1,7 @@
 'use strict'
 var Nightmare = require('nightmare');
 var async = require('async')
+var moment = require('moment')
 
 var u = require ('./handlers/urlHandler')
 var x = require ('./handlers/xRayHandler')
@@ -19,7 +20,9 @@ exports.done = function(){
 }
 
 exports.scrapData = function(date, direction, next){
-    console.log(`Beginning to scrap data on ${date.rzdStr} to ${direction.toCity}...`);
+    console.log(`Beginning to scrap data on ${date.format('DD.MM.YYYY')} to ${direction.toCity}...`);
+    let scanDateTime = moment(new Date())._d
+    
     nightmare
     .goto(u.getUrl(date, direction))
     .wait('table.trlist')
@@ -35,9 +38,9 @@ exports.scrapData = function(date, direction, next){
             arrivalStation: '.trlist__cell-pointdata__tr-route:nth-child(2)',
             carrier: '.trlist__cell-pointdata__tr-carrier | trimT | trimN',
             departureTime: 'td:nth-child(4) .trlist__cell-pointdata__time',
-            departureDate: 'td:nth-child(4) .trlist__cell-pointdata__date-sub | trimLine | rzdToUsDate',
+            departureDate: 'td:nth-child(4) .trlist__cell-pointdata__date-sub | trimLine',
             arrivalTime: 'td:nth-child(8) .trlist__cell-pointdata__time',
-            arrivalDate: 'td:nth-child(8) .trlist__cell-pointdata__date-sub | trimLine |rzdToUsDate',
+            arrivalDate: 'td:nth-child(8) .trlist__cell-pointdata__date-sub | trimLine',
             wayHours: '.trlist__cell-pointdata__route-duration | toHoursString | toFloat',
             wifi: '.trlist-ico-size-norm__wifi@title',
             varPrice: '.trlist-ico-size-norm__dynprice@data-tooltip-key',
@@ -55,10 +58,9 @@ exports.scrapData = function(date, direction, next){
                     ticket.direction = direction.name
                     ticket.departureStation = train.departureStation
                     ticket.arrivalStation = train.arrivalStation
-                    ticket.departureDateTime = new Date(`${train.departureDate} ${train.departureTime}`)
-                    ticket.arrivalDateTime = new Date(`${train.arrivalDate} ${train.arrivalTime}`)
-                    ticket.scanDataTime = new Date()
-                    ticket.scanDateString = date
+                    ticket.departureDateTime = parseDateAndTimeToDate(train.departureDate, train.departureTime)
+                    ticket.arrivalDateTime = parseDateAndTimeToDate(train.arrivalDate, train.arrivalTime)
+                    ticket.scanDateTime = scanDateTime
                     ticket.hoursInWay = train.wayHours
                     ticket.carrier = train.carrier
                     ticket.brand = train.brand
@@ -83,4 +85,8 @@ exports.scrapData = function(date, direction, next){
     .catch(function (error) {
         next(error)
     });
+}
+
+var parseDateAndTimeToDate =function(date, time){
+    return moment(`${date} ${time}`, 'DD.MM.YYYY HH:mm')._d
 }

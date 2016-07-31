@@ -1,24 +1,24 @@
 'use strict'
 var async = require('async')
-
+var moment = require('moment')
 var scrapper = require('./scrapper')
-var t = require('./handlers/timeHandler')
-var config = ('./config')
+var config = require('./config')
 
 let directions = [
     {name: 'toStPete', fromCity: "МОСКВА", fromCode:2000000, toCity:"САНКТ-ПЕТЕРБУРГ", toCode: 2004000},
     {name: 'toMoscow', fromCity: "САНКТ-ПЕТЕРБУРГ", fromCode:2004000, toCity:"МОСКВА", toCode: 2000000}
 ]
 
-let startDate = t.dateToFormat(new Date())
-let finalDate = t.nextDay(startDate.date, config.DAYTOSCRAP)
+let startDate = moment()
+let finalDate = moment().add(config.DAYSTOSCRAP, 'days')
 
+console.log(`Performing scrapping from ${startDate.format('DD.MM.YYYY')} to ${finalDate.format('DD.MM.YYYY')}`);
 
 //todo get rid of callback hell!
 async.eachSeries(directions, function(direction, directionSeriesCallback){
-    let currentDate = startDate    
+    let currentDate = moment(startDate)
     console.log(`Start with ${direction.name} direction`);
-    async.whilst(() => currentDate.date < finalDate.date,
+    async.whilst(() => currentDate < finalDate,
         (whilstCallback) =>{
             async.series([
                 (scrapCallback) => {scrapper.scrapData(currentDate, direction, 
@@ -26,7 +26,7 @@ async.eachSeries(directions, function(direction, directionSeriesCallback){
                         if (!err) scrapCallback(null)
                         else console.error('Scrap failed:', err);
                     })},
-                (nextCallback) => {currentDate = t.nextDay(currentDate.date, 1); nextCallback(null)}  
+                (nextCallback) => {currentDate.add(1, 'day'); nextCallback(null)}  
             ],function(err){
                 if(!err) whilstCallback(null)
             })

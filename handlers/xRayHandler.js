@@ -29,10 +29,6 @@ var x = Xray({ filters: {
         var hours = parseInt(value.slice(0, delimeter).trim())
         var mins = parseInt(value.slice(delimeter+2, delimeter+5).trim())
         return (hours + mins/60).toFixed(2)
-    },
-    rzdToUsDate: function(value){
-        var m = value.match(/^(\d{1,2}).(\d{1,2}).(\d{4})$/)
-        return `${m[2]}.${m[1]}.${m[3]}`      
     }
 }
 });

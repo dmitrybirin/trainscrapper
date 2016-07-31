@@ -11,6 +11,7 @@
   "dependencies": {
     "assert": "^1.4.1",
     "async": "^2.0.0",
+    "moment": "^2.14.1",
     "mongodb": "^2.2.5",
     "mongojs": "^2.4.0",
     "nightmare": "^2.5.3",
