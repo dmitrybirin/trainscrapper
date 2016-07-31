@@ -15,7 +15,7 @@ exports.getUrl = function(date, direction){
         checkSeats:1,
         st0:direction.fromCity,
         code0:direction.fromCode,
-        dt0:date.rzdStr,
+        dt0:date.format('DD.MM.YYYY'),
         st1:direction.toCity,
         code1:direction.toCode,
         dt1: moment(date).add(1, 'day').format('DD.MM.YYYY')

@@ -28,7 +28,7 @@ exports.addDataToDb = function(ticketsData, next){
                         data._id = id;
                         db.tickets.insert(data, {safe: true},function(err){
                             assert.equal(err, null);
-                            if (config.DEBUG) console.log(`Ticket data with ${id} id on ${data.departureDateTime} was successfully added to db`)
+                            if (config.DEBUG) console.log(`Ticket data with ${id} id on ${ticketsData[0].departureDateTime}(scrapped data) was successfully added to db`)
                             callback(null)
                         })
                     }], function(err){
@@ -38,7 +38,7 @@ exports.addDataToDb = function(ticketsData, next){
             }, 
             function(err){
                 if (!err) {
-                    if (config.DEBUG) console.log(`All items on ${ticketsData[0].departureDateTime.rzdStr} has been added to the DB.`);
+                    if (config.DEBUG) console.log(`All items on ${ticketsData[0].departureDateTime}(scrapped data) has been added to the DB.`);
                     next(null)
                 }
                 else console.log('Error occured, while adding stuff to db...\n', err);
