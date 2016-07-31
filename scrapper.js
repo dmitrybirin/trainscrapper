@@ -51,12 +51,14 @@ exports.scrapData = function(date, direction, next){
             async.concat(raw_data, (train, callback) => {
                 async.map(train.cars, (car, callback)=>{
                     let ticket = car;
-                    ticket.trainNumber = train.number;
+                    ticket.trainNumber = train.number
+                    ticket.direction = direction.name
                     ticket.departureStation = train.departureStation
                     ticket.arrivalStation = train.arrivalStation
                     ticket.departureDateTime = new Date(`${train.departureDate} ${train.departureTime}`)
                     ticket.arrivalDateTime = new Date(`${train.arrivalDate} ${train.arrivalTime}`)
-                    ticket.scanDateTime = new Date()
+                    ticket.scanDataTime = new Date()
+                    ticket.scanDateString = date
                     ticket.hoursInWay = train.wayHours
                     ticket.carrier = train.carrier
                     ticket.brand = train.brand
@@ -81,30 +83,4 @@ exports.scrapData = function(date, direction, next){
     .catch(function (error) {
         next(error)
     });
-}
-
-var transformDataToDb = function(err, raw_data){
-    async.concat(raw_data, (train, callback) => {
-        async.map(train.cars, (car, callback)=>{
-            let ticket = car;
-            ticket.trainNumber = train.number;
-            ticket.departureStation = train.departureStation
-            ticket.arrivalStation = train.arrivalStation
-            ticket.departureDateTime = new Date(`${train.departureDate} ${train.departureTime}`)
-            ticket.arrivalDateTime = new Date(`${train.arrivalDate} ${train.arrivalTime}`)
-            ticket.scanDateTime = new Date()
-            ticket.hoursInWay = train.wayHours
-            ticket.carrier = train.carrier
-            ticket.brand = train.brand
-            ticket.varPrice = train.varPrice ? true : false
-            ticket.wifi = train.wifi ? true : false
-            callback(null, ticket)
-        }, function(err, results){
-            if (!err) callback(null, results)
-            else console.log('Error occured, while transforming car to ticket...\n', err)
-        })            
-    }, function(err,results){
-        if (!err) db.addDataToDb(results)
-        else console.log('Error occured, while iterating on trains...\n', err)
-    })
 }
