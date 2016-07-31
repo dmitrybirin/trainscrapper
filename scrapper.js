@@ -19,6 +19,17 @@ exports.done = function(){
     })
 }
 
+exports.restart = function(restartCallback){
+    console.log('Restarting the Nightmare...');
+    async.series([
+        (stopCallback) => {nightmare._endNow(); stopCallback(null)},
+        (startCallback) => {nightmare = Nightmare({ show: config.SHOWBROWSING }); startCallback(null)}
+    ],function(err){
+        !err ? restartCallback(null) : restartCallback(err) 
+    })
+}
+
+
 exports.scrapData = function(date, direction, next){
     console.log(`Beginning to scrap data on ${date.format('DD.MM.YYYY')} to ${direction.toCity}...`);
     let scanDateTime = moment(new Date())._d
