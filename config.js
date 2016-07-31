@@ -1,2 +1,3 @@
 exports.DEBUG = false
-exports.DAYSTOSCRAP = 2
+exports.SHOWBROWSING = false
+exports.DAYSTOSCRAP = 7

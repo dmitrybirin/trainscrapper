@@ -8,7 +8,7 @@ var x = require ('./handlers/xRayHandler')
 var db = require('./handlers/dbHandler')
 var config = require('./config')
 
-var nightmare = Nightmare({ show: false }); 
+var nightmare = Nightmare({ show: config.SHOWBROWSING }); 
 
 exports.done = function(){
     async.series([
