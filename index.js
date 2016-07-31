@@ -9,15 +9,18 @@ let directions = [
     {name: 'toMoscow', fromCity: "САНКТ-ПЕТЕРБУРГ", fromCode:2004000, toCity:"МОСКВА", toCode: 2000000}
 ]
 
-let startDate = moment()
-let finalDate = moment().add(config.DAYSTOSCRAP, 'days')
+let startDate = moment(config.STARTDATE, 'DD.MM.YYYY')
+let finalDate = moment(startDate).add(config.DAYSTOSCRAP, 'days')
 
-console.log(`Performing scrapping from ${startDate.format('DD.MM.YYYY')} to ${finalDate.format('DD.MM.YYYY')}`);
+console.log(`-----
+Performing scrapping from ${startDate.format('DD.MM.YYYY')} to ${finalDate.format('DD.MM.YYYY')}
+for the ${directions.map(dir => `"${dir.name}"`).join(', ')} directions
+-----`);
 
 //todo get rid of callback hell!
 async.eachSeries(directions, function(direction, directionSeriesCallback){
     let currentDate = moment(startDate)
-    console.log(`Start with ${direction.name} direction`);
+    console.log(`Starting with ${direction.name} direction`);
     async.whilst(() => currentDate < finalDate,
         (whilstCallback) =>{
             async.series([
