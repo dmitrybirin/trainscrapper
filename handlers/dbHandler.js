@@ -5,9 +5,7 @@ var mongojs = require('mongojs')
 
 var config = require('./../config')
 
-var url = 'mongodb://localhost:27017/rzd'
-
-var db = mongojs(url, ['counters', 'tickets'])
+var db = mongojs(config.dbUrl, ['counters', 'tickets'])
 
 exports.addDataToDb = function(ticketsData, next){
         async.eachSeries(
