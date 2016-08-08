@@ -11,7 +11,6 @@ let directions = [
 
 let startDate = moment(config.STARTDATE, 'DD.MM.YYYY')
 let finalDate = moment(startDate).add(config.DAYSTOSCRAP, 'days')
-
 console.log(`-----
 Performing scrapping from ${startDate.format('DD.MM.YYYY')} to ${finalDate.format('DD.MM.YYYY')}
 for the ${directions.map(dir => `"${dir.name}"`).join(', ')} directions
@@ -24,14 +23,22 @@ async.eachSeries(directions, function(direction, directionSeriesCallback){
     async.whilst(() => currentDate < finalDate,
         (whilstCallback) =>{
             async.series([
-                (scrapCallback) => {scrapper.scrapData(currentDate, direction, 
-                    function(err){
-                        if (!err) scrapCallback(null)
-                        else console.error('Scrap failed:', err);
-                    })},
-                (nextCallback) => {currentDate.add(1, 'day'); nextCallback(null)}  
+                (initCallback) => {
+                    scrapper.init(currentDate, direction, (err)=>{err?initCallback(err):initCallback(null)})
+                },
+                (checkForCaptchaCallback) =>{
+                    scrapper.checkForCaptcha((err)=>{err?checkForCaptchaCallback(err):checkForCaptchaCallback(null)})
+                },
+                (scrapCallback) => {
+                    scrapper.scrapData(currentDate, direction,(err)=> {err ? scrapCallback(err) : scrapCallback(null)})
+                },
+                (nextCallback) => {
+                    currentDate.add(1, 'day')
+                    nextCallback(null)
+                }
             ],function(err){
                 if(!err) whilstCallback(null)
+                else console.log("We've got an error, while iterating on days:\n", err);
             })
         }, function(err){
             console.log(`Done for ${direction.name} direction`);

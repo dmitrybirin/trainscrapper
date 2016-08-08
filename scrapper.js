@@ -9,6 +9,33 @@ var db = require('./handlers/dbHandler')
 var config = require('./config')
 
 var nightmare = Nightmare({ show: config.SHOWBROWSING }); 
+var currentUrl;
+
+exports.init = function(date, direction, callback){
+    currentUrl = u.getUrl(date, direction);
+    nightmare.goto(currentUrl).then(()=>callback(null))
+}
+
+exports.checkForCaptcha = function(callback){
+        if (config.DEBUG) console.log('Checking for captcha...')
+        nightmare.wait(3000).visible('span.j-captcha-box img').then((result)=>
+        {
+            if (result)
+            {
+                console.log('Captcha is here!!! Restarting the Nightmare...');
+                async.series([
+                    (stopCallback) => {nightmare._endNow(); stopCallback(null)},
+                    (startCallback) => {nightmare = Nightmare({ show: config.SHOWBROWSING }); nightmare.goto(currentUrl).then(() =>startCallback(null))}
+                ],function(err){
+                    !err ? callback(null) : callback(err) 
+                })
+            }
+            else{
+                if (config.DEBUG) console.log('No captcha.');
+                callback(null)
+            }
+        })
+}
 
 exports.done = function(){
     async.series([
@@ -19,23 +46,11 @@ exports.done = function(){
     })
 }
 
-exports.restart = function(restartCallback){
-    console.log('Restarting the Nightmare...');
-    async.series([
-        (stopCallback) => {nightmare._endNow(); stopCallback(null)},
-        (startCallback) => {nightmare = Nightmare({ show: config.SHOWBROWSING }); startCallback(null)}
-    ],function(err){
-        !err ? restartCallback(null) : restartCallback(err) 
-    })
-}
-
-
 exports.scrapData = function(date, direction, next){
     console.log(`Beginning to scrap data on ${date.format('DD.MM.YYYY')} to ${direction.toCity}...`);
     let scanDateTime = moment(new Date())._d
     
     nightmare
-    .goto(u.getUrl(date, direction))
     .wait('table.trlist')
     .evaluate(function () {
         return document.querySelector('table.trlist').innerHTML
