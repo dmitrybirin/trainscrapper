@@ -49,6 +49,7 @@ exports.done = function(){
 exports.scrapData = function(date, direction, next){
     console.log(`Beginning to scrap data on ${date.format('DD.MM.YYYY')} to ${direction.toCity}...`);
     let scanDateTime = moment(new Date())._d
+    let scanTimeSlot = getTimeSlot(scanDateTime)
     
     nightmare
     .wait('table.trlist')
@@ -87,6 +88,7 @@ exports.scrapData = function(date, direction, next){
                     ticket.departureDateTime = parseDateAndTimeToDate(train.departureDate, train.departureTime)
                     ticket.arrivalDateTime = parseDateAndTimeToDate(train.arrivalDate, train.arrivalTime)
                     ticket.scanDateTime = scanDateTime
+                    ticket.scanTimeSlot = scanTimeSlot
                     ticket.hoursInWay = train.wayHours
                     ticket.carrier = train.carrier
                     ticket.brand = train.brand
@@ -115,4 +117,14 @@ exports.scrapData = function(date, direction, next){
 
 var parseDateAndTimeToDate =function(date, time){
     return moment(`${date} ${time}`, 'DD.MM.YYYY HH:mm')._d
+}
+
+var getTimeSlot = function(date){
+    var hour = new Date(date).getHours()
+    if (hour>0 && hour<=4) return 'night'
+    if (hour>5 && hour<=8) return 'morning'
+    if (hour>9 && hour<=12) return 'afternoon'
+    if (hour>13 && hour<=16) return 'daytime'
+    if (hour>17 && hour<=20) return 'evening'
+    if (hour>21 && hour<=24) return 'late evening'
 }
