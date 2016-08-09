@@ -47,6 +47,7 @@ async.eachSeries(directions, function(direction, directionSeriesCallback){
     )
 }, function(err){
     if (!err) scrapper.done()
+    console.log("Terminating scrapping task...");
 })
 
 
