@@ -25,7 +25,8 @@ exports.checkForCaptcha = function(callback){
                 console.log('Captcha is here!!! Restarting the Nightmare...');
                 async.series([
                     (stopCallback) => {nightmare._endNow(); stopCallback(null)},
-                    (startCallback) => {nightmare = Nightmare({ show: config.SHOWBROWSING }); nightmare.goto(currentUrl).then(() =>startCallback(null))}
+                    (startCallback) => {nightmare = Nightmare({ show: config.SHOWBROWSING }); 
+                    nightmare.goto(currentUrl).then(() =>this.checkForCaptcha(()=>startCallback(null)))}
                 ],function(err){
                     !err ? callback(null) : callback(err) 
                 })
