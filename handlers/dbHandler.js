@@ -18,20 +18,21 @@ exports.addDataToDb = function(ticketsData, next){
                             update: {$inc:{sequence_value:1}}
                         },
                         function(err, result){
-                            assert.equal(err, null);
-                            callback(null,result.sequence_value) 
+                            if(err) callback(err)
+                            else callback(null,result.sequence_value) 
                         })
                     },
                     function(id, callback){
                         data._id = id;
                         db.tickets.insert(data, {safe: true},function(err){
-                            assert.equal(err, null);
-                            if (config.DEBUG) console.log(`Ticket data with ${id} id on ${ticketsData[0].departureDateTime}(scrapped data) was successfully added to db`)
-                            callback(null)
+                            if(err) callback(err)
+                            else {
+                                if (config.DEBUG) console.log(`Ticket data with ${id} id on ${ticketsData[0].departureDateTime}(scrapped data) was successfully added to db`)
+                                callback(null)
+                            }
                         })
                     }], function(err){
-                        assert.equal(err, null);
-                        eachSeriesCallback(null)
+                        err ? eachSeriesCallback(err) : eachSeriesCallback(null)
                     })
             }, 
             function(err){
