@@ -2,6 +2,7 @@
 var async = require('async')
 var moment = require('moment')
 var scrapper = require('./scrapper')
+var logger = require('./logger')
 
 let directions = [
     {name: 'toStPete', fromCity: "МОСКВА", fromCode:2000000, toCity:"САНКТ-ПЕТЕРБУРГ", toCode: 2004000},
@@ -47,17 +48,16 @@ exports.gatherDataForDays = function(req,res,next){
         )
     }, function(err){
         if (err) {
-            console.log(message, err)
-            //res.status(503).json({message:null, 
-                //error:{what:'The error occured while gathering the data, look in server logs for more information', 
-                //why:err}})
+            logger.error(err)
+            res.status(503).json({message:null, 
+                error:{what:'The error occured while gathering the data, look in server logs for more information', 
+                why:err}})
         }
         else {
-            console.log(`Successfully scrapped tickets information for ${req.params.daysCount} days`)
-            //res.status(200).json({message:`Successfully scrapped tickets information for ${req.params.daysCount} days`})
+            logger.info(`Successfully scrapped tickets information for ${req.params.daysCount} days`)
+            res.status(200).json({message:`Successfully scrapped tickets information for ${req.params.daysCount} days`, error:null})
             scrapper.done()
         }
         console.log("Terminating scrapping task...");
     })
-    res.status(200).json({message:`SThe task was sucessfully launch for ${req.params.daysCount} days`})
 }

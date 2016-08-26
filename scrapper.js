@@ -6,9 +6,9 @@ var moment = require('moment')
 var u = require ('./handlers/urlHandler')
 var x = require ('./handlers/xRayHandler')
 var db = require('./handlers/dbHandler')
+var logger = require('./logger')
 
 var nightmare = Nightmare({ show: (process.env.SHOWBROWSING || false)}); 
-var debugParam = process.env.DEBUG || false
 
 var currentUrl;
 
@@ -18,12 +18,12 @@ exports.init = function(date, direction, callback){
 }
 
 exports.checkForCaptcha = function(callback){
-        if (debugParam) console.log('Checking for captcha...')
+        logger.debug('Checking for captcha...')
         nightmare.wait(3000).visible('span.j-captcha-box img').then((result)=>
         {
             if (result)
             {
-                console.log('Captcha is here!!! Restarting the Nightmare...');
+                logger.info('Captcha is here!!! Restarting the Nightmare...');
                 async.series([
                     (stopCallback) => {nightmare._endNow(); stopCallback(null)},
                     (startCallback) => {nightmare = Nightmare({ show: (process.env.SHOWBROWSING || false)}); 
@@ -33,7 +33,7 @@ exports.checkForCaptcha = function(callback){
                 })
             }
             else{
-                if (debugParam) console.log('No captcha.');
+                logger.debug('No captcha.');
                 callback(null)
             }
         })
@@ -41,15 +41,15 @@ exports.checkForCaptcha = function(callback){
 
 exports.done = function(){
     async.series([
-        (dbCallback) => {console.log('Closing the db connection...');db.close(); dbCallback(null)},
-        (nightmareCallback) => {console.log('Closing the nightmare...');nightmare._endNow(); nightmareCallback(null)}
+        (dbCallback) => {logger.info('Closing the db connection...');db.close(); dbCallback(null)},
+        (nightmareCallback) => {logger.info('Closing the nightmare...');nightmare._endNow(); nightmareCallback(null)}
     ],function(err){
-        if (err) console.log('Error occured, while terminating Db and Nightmare:\n', err); 
+        if (err) logger.error('Error occured, while terminating Db and Nightmare:\n', err); 
     })
 }
 
 exports.scrapData = function(date, direction, next){
-    console.log(`Beginning to scrap data on ${date.format('DD.MM.YYYY')} to ${direction.toCity}...`);
+    logger.info(`Beginning to scrap data on ${date.format('DD.MM.YYYY')} to ${direction.toCity}...`);
     let scanDateTime = moment(new Date())._d
     let scanTimeSlot = getTimeSlot(scanDateTime)
     
@@ -59,7 +59,7 @@ exports.scrapData = function(date, direction, next){
         return document.querySelector('table.trlist').innerHTML
     })
     .then(function (rzdTable) {
-        if (debugParam) console.log(`Got the HTML. Srapping...`);
+        logger.debug(`Got the HTML. Srapping...`);
         x(rzdTable, '.trlist__trlist-row', [{
             number: '.trlist__cell-pointdata__tr-num | trimNumber',
             brand: '.trlist__cell-pointdata__tr-brand | trimN',
@@ -79,7 +79,7 @@ exports.scrapData = function(date, direction, next){
                 price: '.trlist__table-price__price span | trimN | trimRub | toInt'   
             }])
         }])(function(err, raw_data){
-            if (debugParam) console.log(`Transforming scrapped data...`);
+            logger.debug(`Transforming scrapped data...`);
             async.concat(raw_data, (train, callback) => {
                 async.map(train.cars, (car, callback)=>{
                     let ticket = car;
@@ -101,14 +101,14 @@ exports.scrapData = function(date, direction, next){
                     if (!err) {
                         callback(null, results)
                     }
-                    else console.log('Error occured, while transforming car to ticket...\n', err)
+                    else logger.info('Error occured, while transforming car to ticket...\n', err)
                 })            
             }, function(err,results){
                 if (!err) {
-                    if (debugParam) console.log(`Transform completed adding to db...`);
+                    logger.debug(`Transform completed adding to db...`);
                     db.addDataToDb(results, next); 
                 }
-                else console.log('Error occured, while iterating on trains...\n', err)
+                else logger.error('Error occured, while iterating on trains...\n', err)
             })
         })
     })

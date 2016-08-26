@@ -17,6 +17,8 @@
     "mongojs": "^2.4.0",
     "nightmare": "^2.5.3",
     "query-string": "^4.2.2",
+    "socket.io": "^1.4.8",
+    "winston": "^2.2.0",
     "x-ray": "^2.3.0"
   }
 }
