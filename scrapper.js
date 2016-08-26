@@ -6,9 +6,10 @@ var moment = require('moment')
 var u = require ('./handlers/urlHandler')
 var x = require ('./handlers/xRayHandler')
 var db = require('./handlers/dbHandler')
-var config = require('./config')
 
-var nightmare = Nightmare({ show: config.SHOWBROWSING }); 
+var nightmare = Nightmare({ show: (process.env.SHOWBROWSING || false)}); 
+var debugParam = process.env.DEBUG || false
+
 var currentUrl;
 
 exports.init = function(date, direction, callback){
@@ -17,7 +18,7 @@ exports.init = function(date, direction, callback){
 }
 
 exports.checkForCaptcha = function(callback){
-        if (config.DEBUG) console.log('Checking for captcha...')
+        if (debugParam) console.log('Checking for captcha...')
         nightmare.wait(3000).visible('span.j-captcha-box img').then((result)=>
         {
             if (result)
@@ -25,14 +26,14 @@ exports.checkForCaptcha = function(callback){
                 console.log('Captcha is here!!! Restarting the Nightmare...');
                 async.series([
                     (stopCallback) => {nightmare._endNow(); stopCallback(null)},
-                    (startCallback) => {nightmare = Nightmare({ show: config.SHOWBROWSING }); 
+                    (startCallback) => {nightmare = Nightmare({ show: (process.env.SHOWBROWSING || false)}); 
                     nightmare.goto(currentUrl).then(() =>this.checkForCaptcha(()=>startCallback(null)))}
                 ],function(err){
                     !err ? callback(null) : callback(err) 
                 })
             }
             else{
-                if (config.DEBUG) console.log('No captcha.');
+                if (debugParam) console.log('No captcha.');
                 callback(null)
             }
         })
@@ -40,8 +41,8 @@ exports.checkForCaptcha = function(callback){
 
 exports.done = function(){
     async.series([
-        (dbCallback) => {if (config.DEBUG) console.log('Closing the db connection...');db.close(); dbCallback(null)},
-        (nightmareCallback) => {if (config.DEBUG) console.log('Closing the nightmare...');nightmare._endNow(); nightmareCallback(null)}
+        (dbCallback) => {console.log('Closing the db connection...');db.close(); dbCallback(null)},
+        (nightmareCallback) => {console.log('Closing the nightmare...');nightmare._endNow(); nightmareCallback(null)}
     ],function(err){
         if (err) console.log('Error occured, while terminating Db and Nightmare:\n', err); 
     })
@@ -58,7 +59,7 @@ exports.scrapData = function(date, direction, next){
         return document.querySelector('table.trlist').innerHTML
     })
     .then(function (rzdTable) {
-        if (config.DEBUG) console.log(`Got the HTML. Srapping...`);
+        if (debugParam) console.log(`Got the HTML. Srapping...`);
         x(rzdTable, '.trlist__trlist-row', [{
             number: '.trlist__cell-pointdata__tr-num | trimNumber',
             brand: '.trlist__cell-pointdata__tr-brand | trimN',
@@ -78,7 +79,7 @@ exports.scrapData = function(date, direction, next){
                 price: '.trlist__table-price__price span | trimN | trimRub | toInt'   
             }])
         }])(function(err, raw_data){
-            if (config.DEBUG) console.log(`Transforming scrapped data...`);
+            if (debugParam) console.log(`Transforming scrapped data...`);
             async.concat(raw_data, (train, callback) => {
                 async.map(train.cars, (car, callback)=>{
                     let ticket = car;
@@ -104,7 +105,7 @@ exports.scrapData = function(date, direction, next){
                 })            
             }, function(err,results){
                 if (!err) {
-                    if (config.DEBUG) console.log(`Transform completed adding to db...`);
+                    if (debugParam) console.log(`Transform completed adding to db...`);
                     db.addDataToDb(results, next); 
                 }
                 else console.log('Error occured, while iterating on trains...\n', err)

@@ -2,22 +2,20 @@
 var async = require('async')
 var moment = require('moment')
 var scrapper = require('./scrapper')
-var config = require('./config')
 
 let directions = [
     {name: 'toStPete', fromCity: "МОСКВА", fromCode:2000000, toCity:"САНКТ-ПЕТЕРБУРГ", toCode: 2004000},
     {name: 'toMoscow', fromCity: "САНКТ-ПЕТЕРБУРГ", fromCode:2004000, toCity:"МОСКВА", toCode: 2000000}
 ]
 
-
 exports.gatherDataForDays = function(req,res,next){
 
-let startDate = moment()
-let finalDate = moment(startDate).add(req.params.daysCount, 'days')
-console.log(`-----
-Performing scrapping from ${startDate.format('DD.MM.YYYY')} to ${finalDate.format('DD.MM.YYYY')}
-for the ${directions.map(dir => `"${dir.name}"`).join(', ')} directions
------`);
+    let startDate = moment()
+    let finalDate = moment(startDate).add(req.params.daysCount, 'days')
+    console.log(`-----
+    Performing scrapping from ${startDate.format('DD.MM.YYYY')} to ${finalDate.format('DD.MM.YYYY')}
+    for the ${directions.map(dir => `"${dir.name}"`).join(', ')} directions
+    -----`);
 
 //todo get rid of callback hell!
     async.eachSeries(directions, function(direction, directionSeriesCallback){
