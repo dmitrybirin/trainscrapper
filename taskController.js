@@ -49,15 +49,16 @@ exports.gatherDataForDays = function(req,res,next){
     }, function(err){
         if (err) {
             logger.error(err)
-            res.status(503).json({message:null, 
-                error:{what:'The error occured while gathering the data, look in server logs for more information', 
-                why:err}})
+            // res.status(503).json({message:null, 
+            //     error:{what:'The error occured while gathering the data, look in server logs for more information', 
+            //     why:err}})
         }
         else {
             logger.info(`Successfully scrapped tickets information for ${req.params.daysCount} days`)
-            res.status(200).json({message:`Successfully scrapped tickets information for ${req.params.daysCount} days`, error:null})
+            // res.status(200).json({message:`Successfully scrapped tickets information for ${req.params.daysCount} days`, error:null})
             scrapper.done()
         }
         console.log("Terminating scrapping task...");
     })
+    res.status(200).json({message:`Successfully run task for ${req.params.daysCount} days`, error:null})
 }

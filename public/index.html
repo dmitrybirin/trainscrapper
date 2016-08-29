@@ -38,9 +38,9 @@
                 document.querySelector('button').removeAttribute('disabled')
                 document.querySelector('button').style.color = 'red' 
                 if (!data.error) {
-                    console.log('--TASK WAS SUCCESSFUL--')
+                    console.log('--TASK RUN WAS SUCCESSFUL--')
                 }
-                else console.log('--TASK WAS END WITH ERRORS--\n',data.error)
+                else console.log('--TASK RUN WAS END WITH ERRORS--\n',data.error)
             });  
         })
         .catch(function(err) {  
