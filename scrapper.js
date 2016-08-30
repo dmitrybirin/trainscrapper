@@ -15,6 +15,7 @@ var currentUrl;
 exports.init = function(date, direction, callback){
     logger.debug('Initialization of the Nightmare')
     currentUrl = u.getUrl(date, direction);
+    logger.debug(`Current url is: ${currentUrl}`)
     nightmare.goto(currentUrl).then(()=>callback(null))
 }
 
