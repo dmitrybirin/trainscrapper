@@ -24,6 +24,7 @@ async.eachSeries(directions, function(direction, directionSeriesCallback){
         (whilstCallback) =>{
             async.series([
                 (initCallback) => {
+                    logger.info(`Begin to scrap ${currentDate.format('DD.MM.YYYY')}`)
                     scrapper.init(currentDate, direction, (err)=>{err?initCallback(err):initCallback(null)})
                 },
                 (checkForCaptchaCallback) =>{
