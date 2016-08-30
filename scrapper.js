@@ -8,7 +8,7 @@ var x = require ('./handlers/xRayHandler')
 var db = require('./handlers/dbHandler')
 var logger = require('./logger')
 
-var nightmare = Nightmare({ show: (process.env.SHOWBROWSING || false)}); 
+var nightmare = Nightmare({ show: false}); 
 
 var currentUrl;
 
@@ -26,7 +26,7 @@ exports.checkForCaptcha = function(callback){
                 logger.info('Captcha is here!!! Restarting the Nightmare...');
                 async.series([
                     (stopCallback) => {nightmare._endNow(); stopCallback(null)},
-                    (startCallback) => {nightmare = Nightmare({ show: (process.env.SHOWBROWSING || false)}); 
+                    (startCallback) => {nightmare = Nightmare({ show: false}); 
                     nightmare.goto(currentUrl).then(() =>this.checkForCaptcha(()=>startCallback(null)))}
                 ],function(err){
                     !err ? callback(null) : callback(err) 
