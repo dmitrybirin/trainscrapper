@@ -2,6 +2,7 @@
 var assert = require('assert')
 var async = require('async')
 var mongojs = require('mongojs')
+var logger = require('./../logger')
 
 var db = mongojs(process.env.MONGODB_URI, ['counters', 'tickets'])
 
@@ -25,7 +26,7 @@ exports.addDataToDb = function(ticketsData, next){
                         db.tickets.insert(data, {safe: true},function(err){
                             if(err) callback(err)
                             else {
-                                if (process.env.DEBUG || false) console.log(`Ticket data with ${id} id on ${ticketsData[0].departureDateTime}(scrapped data) was successfully added to db`)
+                                logger.debug(`Ticket data with ${id} id on ${ticketsData[0].departureDateTime}(scrapped data) was successfully added to db`)
                                 callback(null)
                             }
                         })
@@ -35,10 +36,10 @@ exports.addDataToDb = function(ticketsData, next){
             }, 
             function(err){
                 if (!err) {
-                    if (process.env.DEBUG || false) console.log(`All items on ${ticketsData[0].departureDateTime}(scrapped data) has been added to the DB.`);
+                    logger.debug(`All items on ${ticketsData[0].departureDateTime}(scrapped data) has been added to the DB.`);
                     next(null)
                 }
-                else console.log('Error occured, while adding stuff to db...\n', err);
+                else logger.error('Error occured, while adding stuff to db...\n', err);
         })
 }
 
