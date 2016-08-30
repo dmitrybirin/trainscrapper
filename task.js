@@ -11,7 +11,7 @@ let directions = [
 
 let startDate = moment()
 let finalDate = moment(startDate).add(process.env.DAYSTOCOUNT, 'days')
-console.log(`-----
+logger.info(`-----
 Performing scrapping from ${startDate.format('DD.MM.YYYY')} to ${finalDate.format('DD.MM.YYYY')}
 for the ${directions.map(dir => `"${dir.name}"`).join(', ')} directions
 -----`);
@@ -19,7 +19,7 @@ for the ${directions.map(dir => `"${dir.name}"`).join(', ')} directions
 //todo get rid of callback hell!
 async.eachSeries(directions, function(direction, directionSeriesCallback){
     let currentDate = moment(startDate)
-    console.log(`Starting with ${direction.name} direction`);
+    logger.info(`Starting with ${direction.name} direction`);
     async.whilst(() => currentDate < finalDate,
         (whilstCallback) =>{
             async.series([
@@ -37,11 +37,11 @@ async.eachSeries(directions, function(direction, directionSeriesCallback){
                     nextCallback(null)
                 }
             ],function(err){
-                err ? console.log(`We've got an error, while scraping the ${currentDate}:\n`, err) : whilstCallback(null)
+                err ? logger.error(`We've got an error, while scraping the ${currentDate}:\n`, err) : whilstCallback(null)
             })
         }, function(err){
-            console.log(`Done for ${direction.name} direction`);
-            err ? console.log(`We've got an error, while changing direction the ${currentDate}:\n`, err) : directionSeriesCallback(null)
+            logger.info(`Done for ${direction.name} direction`);
+            err ? logger.error(`We've got an error, while changing direction the ${currentDate}:\n`, err) : directionSeriesCallback(null)
         }             
     )
 }, function(err){
@@ -52,5 +52,5 @@ async.eachSeries(directions, function(direction, directionSeriesCallback){
         logger.info(`Successfully scrapped tickets information for ${process.env.DAYSTOCOUNT} days`)
         scrapper.done()
     }
-    console.log("Terminating scrapping task...");
+    logger.info("Terminating scrapping task...");
 })
