@@ -24,14 +24,16 @@ async.eachSeries(directions, function(direction, directionSeriesCallback){
         (whilstCallback) =>{
             async.series([
                 (initCallback) => {
-                    logger.info(`Begin to scrap ${currentDate.format('DD.MM.YYYY')}`)
-                    scrapper.init(currentDate, direction, (err)=>{err?initCallback(err):initCallback(null)})
+                    scrapper.init(currentDate, direction, 
+                    (err)=>{logger.debug('task: Initialization of the Nightmare completed.');err?initCallback(err):initCallback(null)})
                 },
                 (checkForCaptchaCallback) =>{
-                    scrapper.checkForCaptcha((err)=>{err?checkForCaptchaCallback(err):checkForCaptchaCallback(null)})
+                    scrapper.checkForCaptcha(
+                    (err)=>{logger.debug('task: Checking for captcha completed.');err?checkForCaptchaCallback(err):checkForCaptchaCallback(null)})
                 },
                 (scrapCallback) => {
-                    scrapper.scrapData(currentDate, direction,(err)=> {err ? scrapCallback(err) : scrapCallback(null)})
+                    scrapper.scrapData(currentDate, direction,
+                    (err)=> {logger.debug('task: Scraping data completed.');err ? scrapCallback(err) : scrapCallback(null)})
                 },
                 (nextCallback) => {
                     currentDate.add(1, 'day')

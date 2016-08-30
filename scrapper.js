@@ -13,6 +13,7 @@ var nightmare = Nightmare({ show: false});
 var currentUrl;
 
 exports.init = function(date, direction, callback){
+    logger.debug('Initialization of the Nightmare')
     currentUrl = u.getUrl(date, direction);
     nightmare.goto(currentUrl).then(()=>callback(null))
 }
