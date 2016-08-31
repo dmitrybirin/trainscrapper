@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "test data getting for big data research",
   "main": "data_scrapper.js",
+  "engines": {
+    "node": "6.5.0"
+  },
   "scripts": {
     "start": "node task.js",
     "test": "echo \"Error: no test specified\" && exit 1"
