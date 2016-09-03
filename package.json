@@ -18,8 +18,8 @@
     "moment": "^2.14.1",
     "mongodb": "^2.2.5",
     "mongojs": "^2.4.0",
-    "nightmare": "^2.6.1",
-    "query-string": "^4.2.2",
+    "node-horseman": "^3.1.1",
+    "phantomjs-prebuilt": "^2.1.12",
     "winston": "^2.2.0",
     "x-ray": "^2.3.0"
   }

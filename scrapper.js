@@ -1,35 +1,41 @@
 'use strict'
-var Nightmare = require('nightmare');
+var Horseman = require('node-horseman')
 var async = require('async')
 var moment = require('moment')
 
-var u = require ('./handlers/urlHandler')
 var x = require ('./handlers/xRayHandler')
 var db = require('./handlers/dbHandler')
 var logger = require('./logger')
 
-var nightmare = Nightmare({ show: false}); 
+var currentUrl = 'https://pass.rzd.ru/'
+var horseman = new Horseman({timeout:15000}).viewport(1024,800)
 
 var currentUrl;
 
 exports.init = function(date, direction, callback){
-    logger.debug('Initialization of the Nightmare')
-    currentUrl = u.getUrl(date, direction);
-    logger.debug(`Current url is: ${currentUrl}`)
-    nightmare.goto(currentUrl).then(()=>callback(null))
+    logger.debug('Initialization of the Horseman')
+    horseman
+    .userAgent('Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0')
+    .on('consoleMessage', (msg) => console.log(msg))
+    .on('error', (error) => console.log(error))
+    .open(currentUrl).then(()=>callback(null))
 }
 
 exports.checkForCaptcha = function(callback){
         logger.debug('Checking for captcha...')
-        nightmare.wait(3000).visible('span.j-captcha-box img').then((result)=>
+        horseman.wait(3000).visible('span.j-captcha-box img').then((result)=>
         {
             if (result)
             {
-                logger.info('Captcha is here!!! Restarting the Nightmare...');
+                logger.info('Captcha is here!!! Restarting the Horseman...');
                 async.series([
-                    (stopCallback) => {nightmare._endNow(); stopCallback(null)},
-                    (startCallback) => {nightmare = Nightmare({ show: false}); 
-                    nightmare.goto(currentUrl).then(() =>this.checkForCaptcha(()=>startCallback(null)))}
+                    (stopCallback) => {horseman.close(); stopCallback(null)},
+                    (startCallback) => {horseman = new Horseman({timeout:15000}).viewport(1024,800) 
+                        horseman
+                        .userAgent('Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0')
+                        .on('consoleMessage', (msg) => console.log(msg))
+                        .on('error', (error) => console.log(error))
+                        .open(currentUrl).then(() =>this.checkForCaptcha(()=>startCallback(null)))}
                 ],function(err){
                     !err ? callback(null) : callback(err) 
                 })
@@ -44,9 +50,9 @@ exports.checkForCaptcha = function(callback){
 exports.done = function(){
     async.series([
         (dbCallback) => {logger.info('Closing the db connection...');db.close(); dbCallback(null)},
-        (nightmareCallback) => {logger.info('Closing the nightmare...');nightmare._endNow(); nightmareCallback(null)}
+        (horsemanCallback) => {logger.info('Closing the horseman...');horseman.close(); horsemanCallback(null)}
     ],function(err){
-        if (err) logger.error('Error occured, while terminating Db and Nightmare:\n', err); 
+        if (err) logger.error('Error occured, while terminating Db and Horseman:\n', err); 
     })
 }
 
@@ -55,8 +61,12 @@ exports.scrapData = function(date, direction, next){
     let scanDateTime = moment(new Date())._d
     let scanTimeSlot = getTimeSlot(scanDateTime)
     
-    nightmare
-    .wait('table.trlist')
+    horseman
+    .open('https://pass.rzd.ru/')
+    .type('input[placeholder=\"Откуда\"]', direction.fromCity)
+    .type('input[placeholder=\"Куда\"]', direction.toCity)
+    .click('button#Submit')
+    .waitForSelector('table.trlist')
     .evaluate(function () {
         return document.querySelector('table.trlist').innerHTML
     })
@@ -114,9 +124,6 @@ exports.scrapData = function(date, direction, next){
             })
         })
     })
-    .catch(function (error) {
-        next(error)
-    });
 }
 
 var parseDateAndTimeToDate =function(date, time){
