@@ -10,40 +10,13 @@ var logger = require('./logger')
 var currentUrl = 'https://pass.rzd.ru/'
 
 var horsemanInit = () => {
-    return new Horseman({timeout:15000})    
+    return new Horseman({timeout:20000})    
     .userAgent('Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0')
     .on('consoleMessage', (msg) => logger.silly(msg))
     .on('error', (error) => logger.error(error))
 }
 
 var horseman;
-
-Horseman.registerAction('checkCaptcha', function(selector) {
-  logger.debug('Checking for captcha...')
-  var self = this;
-  return this
-    .wait(3000).visible(selector).then((result)=>
-    {
-        if (result)
-        {
-            logger.info('Captcha is here!!! Restarting the Horseman...');
-            async.series([
-                (stopCallback) => {horseman.close(); stopCallback(null)},
-                (startCallback) => {
-                    horsemanInit()
-                    .open(currentUrl)
-                    .then(()=>startCallback(null))}
-            ],function(err){
-                if (!err) self.checkCaptcha(selector)
-                if (err) next(err) 
-            })
-        }
-        else{
-            logger.debug('No captcha.');
-        }
-    })
-});
-
 
 var checkCaptcha = function(){
     return new Promise( function( resolve, reject ){
@@ -105,7 +78,7 @@ exports.scrapData = function(date, direction, next){
     let scanDateTime = moment(new Date())._d
     let scanTimeSlot = getTimeSlot(scanDateTime)
     horseman = horsemanInit()
-    logger.info('DATE!!!!', date.format('DD.MM.YYYY'))
+
     horseman
     .open(currentUrl)
     .then(checkCaptcha)
