@@ -8,23 +8,48 @@ var db = require('./handlers/dbHandler')
 var logger = require('./logger')
 
 var currentUrl = 'https://pass.rzd.ru/'
+
 var horsemanInit = () => {
-    return new Horseman({timeout:15000}).viewport(1024,800)    
+    return new Horseman({timeout:15000})    
     .userAgent('Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0')
     .on('consoleMessage', (msg) => logger.silly(msg))
     .on('error', (error) => logger.error(error))
 }
-var horseman = horsemanInit()
 
-exports.init = function(date, direction, callback){
-    logger.debug('Open the page by the Horseman')
-    horseman
-    .open(currentUrl).then(()=>callback(null))
-}
+var horseman;
 
-exports.checkForCaptcha = function(callback){
-        logger.debug('Checking for captcha...')
-        horseman.wait(3000).visible('span.j-captcha-box img').then((result)=>
+Horseman.registerAction('checkCaptcha', function(selector) {
+  logger.debug('Checking for captcha...')
+  var self = this;
+  return this
+    .wait(3000).visible(selector).then((result)=>
+    {
+        if (result)
+        {
+            logger.info('Captcha is here!!! Restarting the Horseman...');
+            async.series([
+                (stopCallback) => {horseman.close(); stopCallback(null)},
+                (startCallback) => {
+                    horsemanInit()
+                    .open(currentUrl)
+                    .then(()=>startCallback(null))}
+            ],function(err){
+                if (!err) self.checkCaptcha(selector)
+                if (err) next(err) 
+            })
+        }
+        else{
+            logger.debug('No captcha.');
+        }
+    })
+});
+
+
+var checkCaptcha = function(){
+    return new Promise( function( resolve, reject ){
+        return horseman
+        .wait(3000).visible('span.j-captcha-box img')
+        .then((result)=>
         {
             if (result)
             {
@@ -34,42 +59,64 @@ exports.checkForCaptcha = function(callback){
                     (startCallback) => {
                         horsemanInit()
                         .open(currentUrl)
-                        .then(() =>this.checkForCaptcha(()=>startCallback(null)))}
+                        .then(()=>startCallback(null))}
                 ],function(err){
-                    !err ? callback(null) : callback(err) 
+                    if (!err) return horseman.then(checkCaptcha)
+                    if (err) next(err) 
                 })
             }
             else{
                 logger.debug('No captcha.');
-                callback(null)
+                return horseman
             }
         })
+        .then(resolve)
+    })
 }
 
-exports.done = function(){
-    async.series([
-        (dbCallback) => {logger.info('Closing the db connection...');db.close(); dbCallback(null)},
-        (horsemanCallback) => {logger.info('Closing the horseman...');horseman.close(); horsemanCallback(null)}
-    ],function(err){
-        if (err) logger.error('Error occured, while terminating Db and Horseman:\n', err); 
+var getDate = function (){
+    return horseman.evaluate(function(){return $('input#date0').attr('value')})
+}
+
+var checkDate = function(realDate){
+    return new Promise( function( resolve, reject ){
+        return getDate()
+        .then(function(val){
+                logger.info('val is', val)
+                if (!val.includes(realDate)){
+                    logger.debug('date isn\'t right incrementing...')
+                    return horseman.click('.box-form__datetime__arrow-right.j-right')
+                    .then(function(){
+                        return realDate
+                    })
+                    .then(checkDate)
+                } 
+                else{
+                    logger.debug('date is right.')
+                    return horseman
+                }
+        })
+        .then(resolve);  
     })
+
 }
 
 exports.scrapData = function(date, direction, next){
-    logger.info(`Beginning to scrap data on ${date.format('DD.MM.YYYY')} to ${direction.toCity}...`);
     let scanDateTime = moment(new Date())._d
     let scanTimeSlot = getTimeSlot(scanDateTime)
-    
+    horseman = horsemanInit()
+    logger.info('DATE!!!!', date.format('DD.MM.YYYY'))
     horseman
+    .open(currentUrl)
+    .then(checkCaptcha)
+    .then(()=>logger.info(`Beginning to scrap data on ${date.format('DD.MM.YYYY')} to ${direction.toCity}...`))
     .type('input[placeholder=\"Откуда\"]', direction.fromCity)
     .type('input[placeholder=\"Куда\"]', direction.toCity)
-    .type('input#date0', date.format('DD.MM.YYYY'))
+    .then(function(){return date.format('DD.MM.YYYY')})
+    .then(checkDate)
     .click('button#Submit')
     .waitForSelector('table.trlist')
-    .screenshot('current.png')
-    .evaluate(function () {
-        return document.querySelector('table.trlist').innerHTML
-    })
+    .html('table.trlist')
     .then(function (rzdTable) {
         logger.debug(`Got the HTML. Srapping...`);
         x(rzdTable, '.trlist__trlist-row', [{
@@ -126,9 +173,19 @@ exports.scrapData = function(date, direction, next){
     })
     .catch(function(err){
         logger.error('The Horseman error has occured.')
-        horseman.close()
         next(err)
     })
+    .finally(function(){
+        logger.debug('Closing the Horseman instance')
+        horseman.close()
+    })
+
+}
+
+
+exports.done = function(){
+    logger.info('Closing the db connection...')
+    db.close()
 }
 
 var parseDateAndTimeToDate =function(date, time){

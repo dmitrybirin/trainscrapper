@@ -23,14 +23,6 @@ async.eachSeries(directions, function(direction, directionSeriesCallback){
     async.whilst(() => currentDate < finalDate,
         (whilstCallback) =>{
             async.series([
-                (initCallback) => {
-                    scrapper.init(currentDate, direction, 
-                    (err)=>{logger.debug('task: Page openening completed');err?initCallback(err):initCallback(null)})
-                },
-                (checkForCaptchaCallback) =>{
-                    scrapper.checkForCaptcha(
-                    (err)=>{logger.debug('task: Checking for captcha completed.');err?checkForCaptchaCallback(err):checkForCaptchaCallback(null)})
-                },
                 (scrapCallback) => {
                     scrapper.scrapData(currentDate, direction,
                     (err)=> {logger.debug('task: Scraping data completed.');err ? scrapCallback(err) : scrapCallback(null)})
