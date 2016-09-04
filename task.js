@@ -25,7 +25,7 @@ async.eachSeries(directions, function(direction, directionSeriesCallback){
             async.series([
                 (initCallback) => {
                     scrapper.init(currentDate, direction, 
-                    (err)=>{logger.debug('task: Initialization of the Nightmare completed.');err?initCallback(err):initCallback(null)})
+                    (err)=>{logger.debug('task: Page openening completed');err?initCallback(err):initCallback(null)})
                 },
                 (checkForCaptchaCallback) =>{
                     scrapper.checkForCaptcha(

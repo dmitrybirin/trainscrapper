@@ -8,16 +8,17 @@ var db = require('./handlers/dbHandler')
 var logger = require('./logger')
 
 var currentUrl = 'https://pass.rzd.ru/'
-var horseman = new Horseman({timeout:15000}).viewport(1024,800)
-
-var currentUrl;
+var horsemanInit = () => {
+    return new Horseman({timeout:15000}).viewport(1024,800)    
+    .userAgent('Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0')
+    .on('consoleMessage', (msg) => logger.silly(msg))
+    .on('error', (error) => logger.error(error))
+}
+var horseman = horsemanInit()
 
 exports.init = function(date, direction, callback){
-    logger.debug('Initialization of the Horseman')
+    logger.debug('Open the page by the Horseman')
     horseman
-    .userAgent('Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0')
-    .on('consoleMessage', (msg) => console.log(msg))
-    .on('error', (error) => console.log(error))
     .open(currentUrl).then(()=>callback(null))
 }
 
@@ -30,12 +31,10 @@ exports.checkForCaptcha = function(callback){
                 logger.info('Captcha is here!!! Restarting the Horseman...');
                 async.series([
                     (stopCallback) => {horseman.close(); stopCallback(null)},
-                    (startCallback) => {horseman = new Horseman({timeout:15000}).viewport(1024,800) 
-                        horseman
-                        .userAgent('Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0')
-                        .on('consoleMessage', (msg) => console.log(msg))
-                        .on('error', (error) => console.log(error))
-                        .open(currentUrl).then(() =>this.checkForCaptcha(()=>startCallback(null)))}
+                    (startCallback) => {
+                        horsemanInit()
+                        .open(currentUrl)
+                        .then(() =>this.checkForCaptcha(()=>startCallback(null)))}
                 ],function(err){
                     !err ? callback(null) : callback(err) 
                 })
@@ -62,11 +61,12 @@ exports.scrapData = function(date, direction, next){
     let scanTimeSlot = getTimeSlot(scanDateTime)
     
     horseman
-    .open('https://pass.rzd.ru/')
     .type('input[placeholder=\"Откуда\"]', direction.fromCity)
     .type('input[placeholder=\"Куда\"]', direction.toCity)
+    .type('input#date0', date.format('DD.MM.YYYY'))
     .click('button#Submit')
     .waitForSelector('table.trlist')
+    .screenshot('current.png')
     .evaluate(function () {
         return document.querySelector('table.trlist').innerHTML
     })
@@ -123,6 +123,11 @@ exports.scrapData = function(date, direction, next){
                 else logger.error('Error occured, while iterating on trains...\n', err)
             })
         })
+    })
+    .catch(function(err){
+        logger.error('The Horseman error has occured.')
+        horseman.close()
+        next(err)
     })
 }
 
