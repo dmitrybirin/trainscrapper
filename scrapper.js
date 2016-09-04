@@ -51,15 +51,15 @@ var getDate = function (){
     return horseman.evaluate(function(){return $('input#date0').attr('value')})
 }
 
-var checkDate = function(realDate){
+var checkDate = function(neededDate){
     return new Promise( function( resolve, reject ){
         return getDate()
         .then(function(val){
-                if (!val.includes(realDate)){
-                    logger.debug('date isn\'t right incrementing...')
+                if (!val.includes(neededDate)){
+                    logger.debug(`date is ${val}, incrementing...`)
                     return horseman.click('.box-form__datetime__arrow-right.j-right')
                     .then(function(){
-                        return realDate
+                        return neededDate
                     })
                     .then(checkDate)
                 } 
