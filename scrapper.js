@@ -78,7 +78,6 @@ exports.scrapData = function(date, direction, next){
     let scanDateTime = moment(new Date())._d
     let scanTimeSlot = getTimeSlot(scanDateTime)
     horseman = horsemanInit()
-
     horseman
     .open(currentUrl)
     .then(checkCaptcha)
@@ -88,6 +87,7 @@ exports.scrapData = function(date, direction, next){
     .then(function(){return date.format('DD.MM.YYYY')})
     .then(checkDate)
     .click('button#Submit')
+    .screenshot('before_scrapping.jpg')
     .waitForSelector('table.trlist')
     .html('table.trlist')
     .then(function (rzdTable) {
