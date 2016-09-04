@@ -1,6 +1,7 @@
 'use strict'
 var async = require('async')
 var moment = require('moment')
+var tz = require('moment-timezone')
 var scrapper = require('./scrapper')
 var logger = require('./logger')
 
@@ -9,7 +10,7 @@ let directions = [
     {name: 'toMoscow', fromCity: "САНКТ-ПЕТЕРБУРГ", fromCode:2004000, toCity:"МОСКВА", toCode: 2000000}
 ]
 
-let startDate = moment()
+let startDate = moment(tz.tz('Europe/Moscow'))
 let finalDate = moment(startDate).add(process.env.DAYSTOCOUNT, 'days')
 logger.info(`-----
 Performing scrapping from ${startDate.format('DD.MM.YYYY')} to ${finalDate.format('DD.MM.YYYY')}
