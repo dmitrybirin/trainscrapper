@@ -73,6 +73,26 @@ var checkDate = function(neededDate){
 
 }
 
+var clickAndCheckSpinner = function(){
+    return new Promise(function(resolve, reject){
+        return horseman
+        .click('button#Submit')
+        .wait(3000)
+        .visible('div#ajaxTrainTable')
+        .then(function(result){
+                if (!result){
+                    return horseman.
+                    then(clickAndCheckSpinner)
+                }
+                else{
+                    return horseman
+                }
+            }
+        )
+        .then(resolve)
+    })
+} 
+
 exports.scrapData = function(date, direction, next){
     let scanDateTime = moment(new Date())._d
     let scanTimeSlot = getTimeSlot(scanDateTime)
@@ -85,8 +105,8 @@ exports.scrapData = function(date, direction, next){
     .type('input[placeholder=\"Куда\"]', direction.toCity)
     .then(function(){return date.format('DD.MM.YYYY')})
     .then(checkDate)
+    .then(clickAndCheckSpinner)
     .click('button#Submit')
-    .screenshot('before_scrapping.jpg')
     .waitForSelector('table.trlist')
     .html('table.trlist')
     .then(function (rzdTable) {
@@ -112,7 +132,7 @@ exports.scrapData = function(date, direction, next){
         }])(function(err, raw_data){
             logger.debug(`Transforming scrapped data...`);
             async.concat(raw_data, (train, callback) => {
-                async.map(train.cars, (car, callback)=>{
+                async.map(train.cars, (car, callback)=> {
                     let ticket = car;
                     ticket.trainNumber = train.number
                     ticket.direction = direction.name
