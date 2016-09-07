@@ -72,23 +72,27 @@ var checkDate = function(neededDate){
     })
 
 }
+//todo closure?
+var spinnerCheckCount = 0;
 
 var clickAndCheckSpinner = function(){
     return new Promise(function(resolve, reject){
+        logger.debug('Checking the spinner..')
         return horseman
         .click('button#Submit')
-        .wait(3000)
-        .visible('div#ajaxTrainTable')
-        .then(function(result){
-                if (!result){
+        .waitForSelector('div#ajaxTrainTable')
+        .catch(function(){
+                logger.debug('No spinner found! Retrying...')
+                if(spinnerCheckCount < 10){
+                    spinnerCheckCount++
                     return horseman.
                     then(clickAndCheckSpinner)
-                }
+                } 
                 else{
-                    return horseman
+                    logger.debug('Terminating the process...')
+                    return "Spinner was not found"
                 }
-            }
-        )
+        })
         .then(resolve)
     })
 } 
@@ -106,7 +110,10 @@ exports.scrapData = function(date, direction, next){
     .then(function(){return date.format('DD.MM.YYYY')})
     .then(checkDate)
     .then(clickAndCheckSpinner)
-    .click('button#Submit')
+    //todo handling rejection in the function
+    .then(function(err){
+        if (err) throw err
+    })
     .waitForSelector('table.trlist')
     .html('table.trlist')
     .then(function (rzdTable) {
