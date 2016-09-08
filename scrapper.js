@@ -83,7 +83,8 @@ var clickAndCheckSpinner = function(){
         .waitForSelector('div#ajaxTrainTable')
         .catch(function(){
                 logger.debug('No spinner found! Retrying...')
-                if(spinnerCheckCount < 10){
+                //to do move to the Horseman configuration?
+                if(spinnerCheckCount < process.env.REPEAT_COUNT){
                     spinnerCheckCount++
                     return horseman.
                     then(clickAndCheckSpinner)
@@ -143,6 +144,7 @@ exports.scrapData = function(date, direction, next){
                     let ticket = car;
                     ticket.trainNumber = train.number
                     ticket.direction = direction.name
+                    //todo arrival and departure object?
                     ticket.departureStation = train.departureStation
                     ticket.arrivalStation = train.arrivalStation
                     ticket.departureDateTime = parseDateAndTimeToDate(train.departureDate, train.departureTime)
