@@ -2,6 +2,8 @@
 var Horseman = require('node-horseman')
 var async = require('async')
 var moment = require('moment')
+var Hashids = require("hashids");
+var hashids = new Hashids(process.env.HASH_SALT, 10);
 
 var x = require ('./handlers/xRayHandler')
 var db = require('./handlers/dbHandler')
@@ -142,6 +144,8 @@ exports.scrapData = function(date, direction, batchInfo, next){
                 async.map(train.cars, (car, callback)=> {
                     let ticket = car;
                     ticket.trainNumber = train.number
+                    ticket.type = train.type
+                    ticket.trainHash = getTrainHash(train.number, train.type, train.departureDate, train.departureTime)
                     ticket.direction = direction.name
                     ticket.batch = {
                         id: batchInfo.id,
@@ -194,7 +198,6 @@ exports.scrapData = function(date, direction, batchInfo, next){
 
 }
 
-
 exports.done = function(){
     logger.info('Closing the db connection...')
     db.close()
@@ -202,4 +205,10 @@ exports.done = function(){
 
 var parseDateAndTimeToDate =function(date, time){
     return moment(`${date} ${time}`, 'DD.MM.YYYY HH:mm')._d
+}
+
+function getTrainHash(trainNumber, type, departureDate, departureTime){
+    var stringToEncode = `${trainNumber}, ${type} ticket on ${departureDate} at ${departureTime}`
+    var hex = Buffer(stringToEncode).toString('hex');
+    return hashids.encodeHex(hex);    
 }
