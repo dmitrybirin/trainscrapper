@@ -4,28 +4,54 @@ var moment = require('moment')
 var tz = require('moment-timezone')
 var scrapper = require('./scrapper')
 var logger = require('./logger')
+var db = require('./handlers/dbHandler')
 
 let directions = [
     {name: 'toStPete', fromCity: "МОСКВА", fromCode:2000000, toCity:"САНКТ-ПЕТЕРБУРГ", toCode: 2004000},
     {name: 'toMoscow', fromCity: "САНКТ-ПЕТЕРБУРГ", fromCode:2004000, toCity:"МОСКВА", toCode: 2000000}
 ]
-
 let startDate = moment(tz.tz('Europe/Moscow'))
 let finalDate = moment(startDate).add(process.env.DAYSTOCOUNT, 'days')
-logger.info(`-----
-Performing scrapping from ${startDate.format('DD.MM.YYYY')} to ${finalDate.format('DD.MM.YYYY')}
-for the ${directions.map(dir => `"${dir.name}"`).join(', ')} directions
------`);
+let batchInfo;
+db.getTheBatchValue()
+.then(function(result){
+    batchInfo = {
+        id: result,
+        timeSlot: getTimeSlot(startDate.hour()),
+        scanDate: startDate.format('DD.MM.YYYY'),
+        scanTime: startDate.format('HH:MM')
+    }
+    logger.info(
+    `-----
+    Performing scrapping from ${startDate.format('DD.MM.YYYY')} to ${finalDate.format('DD.MM.YYYY')}
+    for the ${directions.map(dir => `"${dir.name}"`).join(', ')} directions
+    batchID # ${batchInfo.id}
+    -----`);
+    async.eachSeries(directions, scrapingOneDirection, 
+    function(err){
+        if (err) {
+            logger.error(err)
+        }
+        else {
+            logger.info(`Successfully scrapped tickets information for ${process.env.DAYSTOCOUNT} days`)
+            scrapper.done()
+        }
+        logger.info("Terminating scrapping task...");
+    })
+})
+.catch(function(err){
+    logger.error('The error occured in the task', err)
+    scrapper.done()
+})
 
-//todo get rid of callback hell!!
-async.eachSeries(directions, function(direction, directionSeriesCallback){
+function scrapingOneDirection(direction, directionSeriesCallback){
     let currentDate = moment(startDate)
     logger.info(`Starting with ${direction.name} direction`);
     async.whilst(() => currentDate < finalDate,
         (whilstCallback) =>{
             async.series([
                 (scrapCallback) => {
-                    scrapper.scrapData(currentDate, direction,
+                    scrapper.scrapData(currentDate, direction, batchInfo,
                     (err)=> {logger.debug('task: Scraping data completed.');err ? scrapCallback(err) : scrapCallback(null)})
                 },
                 (nextCallback) => {
@@ -40,13 +66,13 @@ async.eachSeries(directions, function(direction, directionSeriesCallback){
             err ? logger.error(`We've got an error, while changing direction the ${currentDate}:\n`, err) : directionSeriesCallback(null)
         }             
     )
-}, function(err){
-    if (err) {
-        logger.error(err)
-    }
-    else {
-        logger.info(`Successfully scrapped tickets information for ${process.env.DAYSTOCOUNT} days`)
-        scrapper.done()
-    }
-    logger.info("Terminating scrapping task...");
-})
+}
+
+function getTimeSlot(hour){
+    if (hour>0 && hour<=4) return 'night'
+    if (hour>5 && hour<=8) return 'morning'
+    if (hour>9 && hour<=12) return 'afternoon'
+    if (hour>13 && hour<=16) return 'daytime'
+    if (hour>17 && hour<=20) return 'evening'
+    if (hour>21 && hour<=24) return 'late evening'
+}

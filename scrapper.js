@@ -98,9 +98,8 @@ var clickAndCheckSpinner = function(){
     })
 } 
 
-exports.scrapData = function(date, direction, next){
+exports.scrapData = function(date, direction, batchInfo, next){
     let scanDateTime = moment(new Date())._d
-    let scanTimeSlot = getTimeSlot(scanDateTime)
     horseman = horsemanInit()
     horseman
     .open(currentUrl)
@@ -144,13 +143,25 @@ exports.scrapData = function(date, direction, next){
                     let ticket = car;
                     ticket.trainNumber = train.number
                     ticket.direction = direction.name
-                    //todo arrival and departure object?
-                    ticket.departureStation = train.departureStation
-                    ticket.arrivalStation = train.arrivalStation
-                    ticket.departureDateTime = parseDateAndTimeToDate(train.departureDate, train.departureTime)
-                    ticket.arrivalDateTime = parseDateAndTimeToDate(train.arrivalDate, train.arrivalTime)
+                    ticket.batch = {
+                        id: batchInfo.id,
+                        timeSlot: batchInfo.timeSlot,
+                        date: batchInfo.scanDate,
+                        time: batchInfo.scanTime,
+                    }
+                    ticket.departure = {
+                        station: train.departureStation,
+                        date: train.departureDate,
+                        time: train.departureTime,
+                        dateTime: parseDateAndTimeToDate(train.departureDate, train.departureTime)
+                    }
+                    ticket.arrival = {
+                        station: train.arrivalStation,
+                        date: train.arrivalDate,
+                        time: train.arrivalTime,
+                        dateTime: parseDateAndTimeToDate(train.arrivalDate, train.arrivalTime)
+                    }
                     ticket.scanDateTime = scanDateTime
-                    ticket.scanTimeSlot = scanTimeSlot
                     ticket.hoursInWay = train.wayHours
                     ticket.carrier = train.carrier
                     ticket.brand = train.brand
@@ -191,14 +202,4 @@ exports.done = function(){
 
 var parseDateAndTimeToDate =function(date, time){
     return moment(`${date} ${time}`, 'DD.MM.YYYY HH:mm')._d
-}
-
-var getTimeSlot = function(date){
-    var hour = new Date(date).getHours()
-    if (hour>0 && hour<=4) return 'night'
-    if (hour>5 && hour<=8) return 'morning'
-    if (hour>9 && hour<=12) return 'afternoon'
-    if (hour>13 && hour<=16) return 'daytime'
-    if (hour>17 && hour<=20) return 'evening'
-    if (hour>21 && hour<=24) return 'late evening'
 }
