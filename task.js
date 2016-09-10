@@ -19,7 +19,7 @@ db.getTheBatchValue()
         id: result,
         timeSlot: getTimeSlot(startDate.hour()),
         scanDate: startDate.format('DD.MM.YYYY'),
-        scanTime: startDate.format('HH:MM')
+        scanTime: startDate.format('HH:mm')
     }
     logger.info(
     `-----
