@@ -17,7 +17,7 @@ Performing scrapping from ${startDate.format('DD.MM.YYYY')} to ${finalDate.forma
 for the ${directions.map(dir => `"${dir.name}"`).join(', ')} directions
 -----`);
 
-//todo get rid of callback hell!
+//todo get rid of callback hell!!
 async.eachSeries(directions, function(direction, directionSeriesCallback){
     let currentDate = moment(startDate)
     logger.info(`Starting with ${direction.name} direction`);
