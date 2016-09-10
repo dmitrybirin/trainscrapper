@@ -144,7 +144,6 @@ exports.scrapData = function(date, direction, batchInfo, next){
                 async.map(train.cars, (car, callback)=> {
                     let ticket = car;
                     ticket.trainNumber = train.number
-                    ticket.type = train.type
                     ticket.trainHash = getTrainHash(train.number, train.type, train.departureDate, train.departureTime)
                     ticket.direction = direction.name
                     ticket.batch = {
