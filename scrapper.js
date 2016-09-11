@@ -18,7 +18,7 @@ var horsemanInit = () => {
     .on('error', (error) => logger.error(error))
 }
 
-var horseman = horsemanInit()
+var horseman;
 
 var checkCaptcha = function(){
     return new Promise( function( resolve, reject ){
@@ -102,7 +102,7 @@ var clickAndCheckSpinner = function(){
 
 exports.scrapData = function(date, direction, batchInfo, next){
     let scanDateTime = moment(new Date())._d
-    
+    horseman = horsemanInit()
     horseman
     .open(currentUrl)
     .then(checkCaptcha)
@@ -191,14 +191,14 @@ exports.scrapData = function(date, direction, batchInfo, next){
         next(err)
     })
     .finally(function(){
-        logger.debug('The day was scrapped by horseman')
+        logger.debug('Closing the Horseman instance')
+        horseman.close()
     })
 
 }
 
 exports.done = function(){
     logger.info('Closing the db connection...')
-    horseman.close()
     db.close()
 }
 
