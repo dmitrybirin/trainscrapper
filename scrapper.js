@@ -9,14 +9,11 @@ var x = require ('./handlers/xRayHandler')
 var db = require('./handlers/dbHandler')
 var logger = require('./logger')
 
-var currentUrl = 'https://pass.rzd.ru/'
+var currentUrl = 'http://pass.rzd.ru/'
 
 var horseman;
-//todo closure
-var spinnerCheckCount;
 
 var horsemanInit = () => {
-    spinnerCheckCount = 0
     return new Horseman({timeout:process.env.HORSEMAN_TIMEOUT})    
     .userAgent('Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0')
     .on('consoleMessage', (msg) => logger.silly(msg))
@@ -75,32 +72,32 @@ var checkDate = function(neededDate){
         })
         .then(resolve);  
     })
-
 }
 
-
-var clickAndCheckSpinner = function(spinnerCheckCount){
-    return new Promise(function(resolve, reject){
+function clickAndCheckSpinner(){
+    var spinnerCheckCount = 0
+    var innerClickAndCheckSpinner = function(maxCount){
         logger.debug('Checking the spinner..')
         return horseman
-        .click('button#Submit')
+        .click('#Submit')
         .waitForSelector('div#ajaxTrainTable')
         .catch(function(){
-                logger.debug('No spinner found! Retrying...')
-                //to do move to the Horseman configuration?
-                if(spinnerCheckCount < process.env.REPEAT_COUNT){
-                    spinnerCheckCount++
-                    return horseman.
-                    then(clickAndCheckSpinner)
-                } 
-                else{
-                    logger.debug('Terminating the process...')
-                    return "Spinner was not found"
-                }
+            logger.debug('No spinner found! Retrying...')
+            if(spinnerCheckCount < maxCount){
+                spinnerCheckCount++
+                return innerClickAndCheckSpinner(maxCount)
+            } 
+            else{
+                logger.debug('Terminating the process...')
+                throw new Error(`Spinner was not found after ${maxCount} attempts`)
+            }
+        })}
+        return new Promise(function(resolve, reject){
+            return innerClickAndCheckSpinner(process.env.REPEAT_COUNT)
+                .catch((err) => console.log('Error while trying to find the spinner', err))
+                .then(resolve)
         })
-        .then(resolve)
-    })
-} 
+}
 
 exports.scrapData = function(date, direction, batchInfo, next){
     let scanDateTime = moment(new Date())._d
@@ -114,10 +111,6 @@ exports.scrapData = function(date, direction, batchInfo, next){
     .then(function(){return date.format('DD.MM.YYYY')})
     .then(checkDate)
     .then(clickAndCheckSpinner)
-    //todo handling rejection in the function
-    .then(function(err){
-        if (err) throw err
-    })
     .waitForSelector('table.trlist')
     .html('table.trlist')
     .then(function (rzdTable) {
