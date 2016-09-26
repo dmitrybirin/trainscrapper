@@ -140,7 +140,7 @@ exports.scrapData = function(date, direction, batchInfo, next){
                 async.map(train.cars, (car, mapCallback)=> {
                     let ticket = car;
                     ticket.trainNumber = train.number
-                    ticket.trainHash = getTrainHash(train.number, ticket.type, train.departureDate, train.departureTime)
+                    ticket.ticketHash = getTicketHash(train.number, ticket.type, train.departureDate, train.departureTime)
                     ticket.direction = direction.name
                     ticket.batch = {
                         id: batchInfo.id,
@@ -202,7 +202,7 @@ var parseDateAndTimeToDate =function(date, time){
     return moment(`${date} ${time}`, 'DD.MM.YYYY HH:mm')._d
 }
 
-function getTrainHash(trainNumber, type, departureDate, departureTime){
+function getTicketHash(trainNumber, type, departureDate, departureTime){
     var stringToEncode = `${trainNumber}, ${type} ticket on ${departureDate} at ${departureTime}`
     var hex = Buffer(stringToEncode).toString('hex');
     return hashids.encodeHex(hex);    
