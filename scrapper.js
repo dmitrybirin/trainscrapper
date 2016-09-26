@@ -135,11 +135,12 @@ exports.scrapData = function(date, direction, batchInfo, next){
             }])
         }])(function(err, raw_data){
             logger.debug(`Transforming scrapped data...`);
-            async.concat(raw_data, (train, callback) => {
-                async.map(train.cars, (car, callback)=> {
+            async.concat(raw_data, (train, concatCallback) => {
+                
+                async.map(train.cars, (car, mapCallback)=> {
                     let ticket = car;
                     ticket.trainNumber = train.number
-                    ticket.trainHash = getTrainHash(train.number, train.type, train.departureDate, train.departureTime)
+                    ticket.trainHash = getTrainHash(train.number, ticket.type, train.departureDate, train.departureTime)
                     ticket.direction = direction.name
                     ticket.batch = {
                         id: batchInfo.id,
@@ -165,10 +166,10 @@ exports.scrapData = function(date, direction, batchInfo, next){
                     ticket.brand = train.brand
                     ticket.varPrice = train.varPrice ? true : false
                     ticket.wifi = train.wifi ? true : false
-                    callback(null, ticket)
+                    mapCallback(null, ticket)
                 }, function(err, results){
                     if (!err) {
-                        callback(null, results)
+                        concatCallback(null, results)
                     }
                     else logger.info('Error occured, while transforming car to ticket...\n', err)
                 })            
