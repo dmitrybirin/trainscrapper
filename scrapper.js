@@ -2,8 +2,6 @@
 var Horseman = require('node-horseman')
 var async = require('async')
 var moment = require('moment')
-var Hashids = require("hashids");
-var hashids = new Hashids(process.env.HASH_SALT, 10);
 
 var x = require ('./handlers/xRayHandler')
 var db = require('./handlers/dbHandler')
@@ -30,7 +28,7 @@ var checkCaptcha = function(){
             {
                 logger.info('Captcha is here!!! Restarting the Horseman...');
                 async.series([
-                    (stopCallback) => {horseman.close(); stopCallback(null)},
+                    (stopCallback) => {this.close(); stopCallback(null)},
                     (startCallback) => {
                         horsemanInit()
                         .open(currentUrl)
@@ -136,7 +134,6 @@ exports.scrapData = function(date, direction, batchInfo, next){
         }])(function(err, raw_data){
             logger.debug(`Transforming scrapped data...`);
             async.concat(raw_data, (train, concatCallback) => {
-                
                 async.map(train.cars, (car, mapCallback)=> {
                     let ticket = car;
                     ticket.trainNumber = train.number
@@ -182,13 +179,14 @@ exports.scrapData = function(date, direction, batchInfo, next){
             })
         })
     })
+    .wait(2000)
     .catch(function(err){
         logger.error('The Horseman error has occured.')
         next(err)
     })
     .finally(function(){
-        logger.debug('Closing the Horseman instance')
-        horseman.close()
+        logger.info('Closing the Horseman instance')
+        this.close()
     })
 
 }
@@ -204,6 +202,6 @@ var parseDateAndTimeToDate =function(date, time){
 
 function getTicketHash(trainNumber, type, departureDate, departureTime){
     var stringToEncode = `${trainNumber}, ${type} ticket on ${departureDate} at ${departureTime}`
-    var hex = Buffer(stringToEncode).toString('hex');
-    return hashids.encodeHex(hex);    
+    var hash = crypto.createHash('sha1').update(stringToEncode).digest('hex')
+    return hash   
 }
