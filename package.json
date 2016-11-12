@@ -1,7 +1,7 @@
 {
   "name": "rzd_api_scrap",
   "version": "1.0.0",
-  "engines":{"node":"6.5.0"},
+  "engines":{"node":"^6.5.0"},
   "description": "test data getting for big data research",
   "main": "data_scrapper.js",
   "scripts": {
