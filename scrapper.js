@@ -2,6 +2,7 @@
 var Horseman = require('node-horseman')
 var async = require('async')
 var moment = require('moment')
+const crypto = require('crypto')
 
 var x = require ('./handlers/xRayHandler')
 var db = require('./handlers/dbHandler')
@@ -202,6 +203,5 @@ var parseDateAndTimeToDate =function(date, time){
 
 function getTicketHash(trainNumber, type, departureDate, departureTime){
     var stringToEncode = `${trainNumber}, ${type} ticket on ${departureDate} at ${departureTime}`
-    var hash = crypto.createHash('sha1').update(stringToEncode).digest('hex')
-    return hash   
+    return crypto.createHash('sha1').update(stringToEncode).digest('hex')
 }
