@@ -3,8 +3,14 @@ var assert = require('assert')
 var async = require('async')
 var mongojs = require('mongojs')
 var logger = require('./../logger')
+const config = require('./../config')
 
-var db = mongojs(process.env.MONGODB_URI, ['counters', 'tickets'])
+var connectionString = config.MONGODB_URI || process.env.MONGODB_URI
+if (!connectionString){
+    console.log('No connection string is present neither in config.js or as env variable')
+    process.exit(1)
+}
+var db = mongojs(connectionString, ['counters', 'tickets'])
 
 exports.getTheBatchValue = function(){
     return new Promise(function(resolve, reject){
