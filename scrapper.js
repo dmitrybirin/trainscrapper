@@ -4,6 +4,7 @@ var async = require('async')
 var moment = require('moment')
 const crypto = require('crypto')
 
+
 var x = require ('./handlers/xRayHandler')
 var db = require('./handlers/dbHandler')
 var logger = require('./logger')
@@ -13,7 +14,7 @@ var currentUrl = 'http://pass.rzd.ru/'
 var horseman;
 
 var horsemanInit = () => {
-    return new Horseman({timeout:process.env.HORSEMAN_TIMEOUT})    
+    return new Horseman({timeout:process.env.HORSEMAN_TIMEOUT || 60000})    
     .userAgent('Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0')
     .on('consoleMessage', (msg) => logger.silly(msg))
     .on('error', (error) => logger.error(error))
@@ -69,7 +70,7 @@ var checkDate = function(neededDate){
                     return horseman
                 }
         })
-        .then(resolve);  
+        .then(resolve)  
     })
 }
 
@@ -92,7 +93,7 @@ function clickAndCheckSpinner(){
             }
         })}
         return new Promise(function(resolve, reject){
-            return innerClickAndCheckSpinner(process.env.REPEAT_COUNT)
+            return innerClickAndCheckSpinner(process.env.REPEAT_COUNT || 10)
                 .catch((err) => console.log('Error while trying to find the spinner', err))
                 .then(resolve)
         })

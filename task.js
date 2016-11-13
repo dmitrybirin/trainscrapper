@@ -6,13 +6,21 @@ var scrapper = require('./scrapper')
 var logger = require('./logger')
 var db = require('./handlers/dbHandler')
 
+
+const daysToCount = process.argv[2]
+if (!daysToCount) {
+    console.log("Please, enter the number of days to count as first argument!");
+    process.exit(1)
+}
+
 let directions = [
     {name: 'toStPete', fromCity: "МОСКВА", fromCode:2000000, toCity:"САНКТ-ПЕТЕРБУРГ", toCode: 2004000},
     {name: 'toMoscow', fromCity: "САНКТ-ПЕТЕРБУРГ", fromCode:2004000, toCity:"МОСКВА", toCode: 2000000}
 ]
 let startDate = moment(tz.tz('Europe/Moscow'))
-let finalDate = moment(startDate).add(process.env.DAYSTOCOUNT, 'days')
+let finalDate = moment(startDate).add(daysToCount, 'days')
 let batchInfo;
+
 db.getTheBatchValue()
 .then(function(result){
     batchInfo = {
