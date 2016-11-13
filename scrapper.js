@@ -80,7 +80,7 @@ function clickAndCheckSpinner(){
         logger.debug('Checking the spinner..')
         return horseman
         .click('#Submit')
-        .waitForSelector('divlalala#ajaxTrainTable')
+        .waitForSelector('div#ajaxTrainTable')
         .catch(function(){
             logger.debug('No spinner found! Retrying...')
             if(spinnerCheckCount < maxCount){
