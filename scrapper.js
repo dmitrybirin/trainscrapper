@@ -14,7 +14,7 @@ var currentUrl = 'http://pass.rzd.ru/'
 var horseman;
 
 var horsemanInit = () => {
-    return new Horseman({timeout:process.env.HORSEMAN_TIMEOUT || 60000})    
+    return new Horseman({timeout:process.env.HORSEMAN_TIMEOUT || 30000})    
     .userAgent('Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0')
     .on('consoleMessage', (msg) => logger.silly(msg))
     .on('error', (error) => logger.error(error))
@@ -80,7 +80,7 @@ function clickAndCheckSpinner(){
         logger.debug('Checking the spinner..')
         return horseman
         .click('#Submit')
-        .waitForSelector('div#ajaxTrainTable')
+        .waitForSelector('divlalala#ajaxTrainTable')
         .catch(function(){
             logger.debug('No spinner found! Retrying...')
             if(spinnerCheckCount < maxCount){
@@ -88,8 +88,8 @@ function clickAndCheckSpinner(){
                 return innerClickAndCheckSpinner(maxCount)
             } 
             else{
-                logger.debug('Terminating the process...')
-                throw new Error(`Spinner was not found after ${maxCount} attempts`)
+                logger.debug(`Spinner was not found after ${maxCount} attempts`)
+                logger.debug('Trying to get data anyway...')
             }
         })}
         return new Promise(function(resolve, reject){
