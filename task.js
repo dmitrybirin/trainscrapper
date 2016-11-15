@@ -38,7 +38,7 @@ db.getTheBatchValue()
     async.eachSeries(directions, scrapingOneDirection, 
     function(err){
         if (err) {
-            logger.error(err)
+            throw err
         }
         else {
             logger.info(`Successfully scrapped tickets information for ${process.env.DAYSTOCOUNT} days`)
@@ -68,11 +68,11 @@ function scrapingOneDirection(direction, directionSeriesCallback){
                     nextCallback(null)
                 }
             ],function(err){
-                err ? logger.error(`We've got an error, while scraping the ${currentDate}:\n`, err) : whilstCallback(null)
+                err ? whilstCallback(`We've got an error, while scraping the ${currentDate}:\n`, err) : whilstCallback(null)
             })
         }, function(err){
             logger.info(`Done for ${direction.name} direction`);
-            err ? logger.error(`We've got an error, while changing direction the ${currentDate}:\n`, err) : directionSeriesCallback(null)
+            err ? directionSeriesCallback(`We've got an error, while changing direction the ${currentDate}:\n`, err) : directionSeriesCallback(null)
         }             
     )
 }
