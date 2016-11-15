@@ -50,6 +50,7 @@ db.getTheBatchValue()
 .catch(function(err){
     logger.error('The error occured in the task', err)
     scrapper.done()
+    process.exit(1)
 })
 
 function scrapingOneDirection(direction, directionSeriesCallback){
